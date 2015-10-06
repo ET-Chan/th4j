@@ -14,13 +14,14 @@
 //}
 package jth
 
-import jth.util.TypeHelper._
-
-//The U is for preparation that some methods could return T specific class.
 import scala.reflect.runtime.universe._
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
-class Storage[T, U]{
+import jth.func.StorageFunc
+@GenerateAllTypes("Factory", "StorageFunc", "") trait Storage[T <: AnyVal, U <: AnyVal]{
+  //abstract method that needed to be implemented
+  def getOps():StorageFunc[T, U]
+  val ops = getOps()
 //  val ops = StorageFuncsCollection.col(combineTypeTags[T, U]()).asInstanceOf[StorageFunc[T, U]]
 }
 
