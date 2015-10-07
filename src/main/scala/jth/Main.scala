@@ -5,19 +5,14 @@ package jth
 import jth.func.StorageFunc
 import com.sun.jna._
 
-object Main extends App {
-//  
-  
- 
-//  val inst = StorageFunc.getFloat()
-//  val storage = inst.Storage_new()
-//  inst.Storage_resize(storage, 20)
-//  inst.Storage_fill(storage, 1.0f)
-//  val t = inst.Storage_data(storage).getFloatArray(0, 20)
-// v
-//  println(t)
-//  println("Hello World")
-  
+import Storage._
 
-  
+object Main extends App {
+//  val t = new Storage.IntStorage(10)
+//  val s = new IntStorage(10)
+//  s.fill(1)
+//  println(s)
+//  i.fill(30)
+//  println(i)
+  println(Array[Double]().isInstanceOf[Array[Int]])
 }

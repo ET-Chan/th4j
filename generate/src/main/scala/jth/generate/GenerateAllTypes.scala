@@ -1,12 +1,14 @@
-package jth
+package jth.generate
+
+
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import scala.collection.mutable
-import ImplMacro._
-import scala.collection.mutable.Stack
+import javax.naming.Name
+import jth.util.MacroHelper._
+import jth.util.MacroHelper
 /**
  * Created by et on 01/10/15, modified from 
  * http://stackoverflow.com/questions/19791686/type-parameters-on-scala-macro-annotations
@@ -16,16 +18,21 @@ import scala.collection.mutable.Stack
  * Generate all types for the annotated traits
  * There are two modes for generating abstract methods
  * 1). Native mode, in native mode, the library will bind all methods onto native library 
- * 2). Factory mode, the library will bind unimplemented mehthod (usually only one) into provided class getter function.
+ * 2). Factory mode, the library will bind unimplemented mehthod into provided class getter function.
  * In native mode, binderName is the native library providing the necessary libraries, 
- * prefix is the prefix needed to be prepended to generated helper instances.
+ * affix is the prefix needed to be prepended to generated helper instances.
  * 
- * In factory mode, binderName is the object name, providing the getter functions,
- * prefix is not used.
+ * In factory mode, binderName are the provider names, if there are multiple abstract methods
+ * needed to be implemented, then the binderName is a string with provider names, separated by ","
+ * e.g. StorageFunc, PointerFunc, if empty string is provided as binderName, or some binderNames are missing, 
+ * then the companion object of the return type of the corresponding methods will be used as binder.
+ * affix is used to indicate
+ * whether appended original methodName to the generated method
+ * 
  * 
  * */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-class GenerateAllTypes(mode: String, binderName: String, prefix: String) extends StaticAnnotation{
+class GenerateAllTypes(mode: String, binderName: String, affix: String) extends StaticAnnotation{
   def macroTransform(annottees: Any*):Any = macro generateAllTypesImpl.impl
 }
 
@@ -38,7 +45,7 @@ object generateAllTypesImpl{
     import c.universe._
     import jth.util.MacroHelper._
     
-    val mode :: binderName :: prefix :: Nil = getAnnnotationArgs(c)
+    val mode :: binderName :: affix :: Nil = getAnnnotationArgs(c)
     
 //    /*-----------------------------------*/
     /*
@@ -53,7 +60,7 @@ object generateAllTypesImpl{
     
     def modifiedCompanion(classDecl:ClassDef) = {
       //iterate through every type
-
+      import jth._
       allTypes.map{case (real, (accReal, prefix))=>{
         val parents = 
            AppliedTypeTree(
@@ -68,15 +75,14 @@ object generateAllTypesImpl{
         if (mode == "Native"){
           
          val instanceName = TermName(prefix + "Instance")
-         //fix this boiler plate
+         
          (q"""
-            @GenerateType("Native",${defaultPrefix + prefix}, "TH") object $instanceName extends $parents
+            @GenerateType("Native",${affix + prefix}, $binderName, "1") object $instanceName extends $parents
           """, q"""def $getterName() = $instanceName""")
         }else if (mode == "Factory"){
           val clazzName = TypeName(prefix + classDecl.name)
-          
          (q"""
-            @GenerateType("Factory", ${"get" + prefix}, $binderName) class $clazzName extends $parents
+            @GenerateType("Factory", ${"get" + prefix}, $binderName, $affix) class $clazzName extends $parents
           """,q"""def $getterName = new $clazzName""")
           
         }else{
@@ -93,7 +99,7 @@ object generateAllTypesImpl{
     
     annottees.map(_.tree).toList match {
       
-      case (classDecl:ClassDef) :: Nil if classDecl.mods.hasFlag(Flag.TRAIT)=> {
+      case (classDecl:ClassDef) :: Nil=> {
         //start to modify the structure
 //        val compDeclOpt = Nil
         val (compDecl, getterDecls) = modifiedCompanion(classDecl)
