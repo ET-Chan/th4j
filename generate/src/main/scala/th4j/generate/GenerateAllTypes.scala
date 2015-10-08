@@ -25,17 +25,13 @@
  *
  */
 
-package jth.generate
-
-
-
+package th4j.generate
+import th4j._
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import javax.naming.Name
-import jth.util.MacroHelper._
-import jth.util.MacroHelper
+import th4j.util.MacroHelper._
 /**
  * Created by et on 01/10/15, modified from 
  * http://stackoverflow.com/questions/19791686/type-parameters-on-scala-macro-annotations
@@ -70,8 +66,7 @@ class GenerateAllTypes(mode: String, binderName: String, affix: String) extends 
 object generateAllTypesImpl{
   def impl(c:Context)(annottees: c.Expr[Any]*):c.Expr[Any]={
     import c.universe._
-    import jth.util.MacroHelper._
-    
+
     val mode :: binderName :: affix :: Nil = getAnnnotationArgs(c)
     
 //    /*-----------------------------------*/
@@ -87,7 +82,6 @@ object generateAllTypesImpl{
     
     def modifiedCompanion(classDecl:ClassDef) = {
       //iterate through every type
-      import jth._
       allTypes.map{case (real, (accReal, prefix))=>{
         val parents = 
            AppliedTypeTree(

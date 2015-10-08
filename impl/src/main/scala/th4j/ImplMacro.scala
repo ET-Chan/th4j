@@ -28,8 +28,7 @@
 /**
  * Created by et on 25/09/15.
  */
-package jth
-
+package th4j
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context

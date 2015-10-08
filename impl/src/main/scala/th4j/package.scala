@@ -25,7 +25,7 @@
  *
  */
 
-package object jth {
+package object th4j {
   
   val defaultPrefix = "TH"
   

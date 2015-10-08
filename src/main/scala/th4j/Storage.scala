@@ -26,21 +26,22 @@
  *
  */
 
-package jth
+package th4j
 
-
+import th4j.func
+import th4j.generate.GenerateAllTypes
 
 import scala.language.experimental.macros
-import jth.func._
-import jth.generate._
+import th4j.func._
+import th4j.generate._
 import scala.NotImplementedError
 
 @GenerateAllTypes("Factory", "", "0")
 abstract class Storage[T <: AnyVal, U <: AnyVal]{
   //abstract method that needed to be implemented
-  def getOps():StorageFunc[T, U]
-  def getPointerOps():PointerFunc[T]
-  def getStorageCopyOps():StorageCopyFunc[T, U]
+  def getOps():func.StorageFunc[T, U]
+  def getPointerOps():func.PointerFunc[T]
+  def getStorageCopyOps():func.StorageCopyFunc[T, U]
   val ops= getOps()
   val ptrOps = getPointerOps()
   val copyOps = getStorageCopyOps()

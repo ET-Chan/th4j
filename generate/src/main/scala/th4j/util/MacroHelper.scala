@@ -25,36 +25,18 @@
  *
  */
 
-package jth
+package th4j.util
 
+import scala.reflect.macros.whitebox.Context
 
-import jth.Storage._
-import jth.Storage.FloatStorage
-import jth.func.StorageFunc
-import jth.func.TensorFunc
-import com.sun.jna._
-
-
-object Main extends App {
-
-  val d= new DoubleStorage(100)
-  val t = (0 until 100 map{_.toShort}).toArray
-  val l = new ShortStorage(100)
-  l.copy(t)
-  d.copy(l)
-  println(l)
-  println(d)
-  TensorFunc.IntInstance
-  //  d.fill(0)
-
-//  println(d.toString)
-//  println(d)
-
-//  val t = new Storage.IntStorage(10)
-//  val s = new IntStorage(10)
-//  s.fill(1)
-//  println(s)
-//  i.fill(30)
-//  println(i)
-//  println(Array[Double]().isInstanceOf[Array[Int]])
+object MacroHelper {
+   def getAnnnotationArgs(c:Context):List[String]={
+      import c.universe._
+      c.prefix.tree match {
+        case q"""new $clazz(..$expParams)""" => {
+          expParams.map{case Literal(Constant(arg)) => arg.toString}
+        } 
+        
+      }
+    }
 }

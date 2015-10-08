@@ -25,7 +25,8 @@
  *
  */
 
-package jth
+package th4j
+
 //this is for all type generating functions
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context

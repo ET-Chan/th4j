@@ -25,10 +25,11 @@
  *
  */
 
-package jth.func
+package th4j.func
 
 import com.sun.jna._
-import jth.generate._
+import th4j.func
+import th4j.generate._
 
 
 //for this trait, I won't bother using macro, it is overkilling

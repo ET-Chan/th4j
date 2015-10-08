@@ -25,17 +25,13 @@
  *
  */
 
-package jth.func
+package th4j.func
 
+import th4j.generate.GenerateAllTypes
 
-import scala.annotation.StaticAnnotation
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
-import scala.reflect.macros.Context
+import th4j.generate._
 import com.sun.jna._
-import jth.generate._
-import com.sun.jna.Pointer
 
 @GenerateAllTypes("Native", "TH", "TH")
 trait StorageFunc[T <: AnyVal, U <: AnyVal] {

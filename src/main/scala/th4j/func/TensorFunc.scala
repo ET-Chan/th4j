@@ -23,10 +23,11 @@
  *
  */
 
-package jth.func
+package th4j.func
 
 import com.sun.jna._
-import jth.generate._
+import th4j.generate._
+import th4j.generate.GenerateAllTypes
 
 /**
  * Created by et on 08/10/15.

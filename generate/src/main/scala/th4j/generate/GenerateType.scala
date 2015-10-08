@@ -25,19 +25,14 @@
  *
  */
 
-package jth.generate
-
-
+package th4j.generate
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import javax.naming.Name
-import jth.util.MacroHelper._
 
-
-
+import th4j.util.MacroHelper._
 
 /*
  * Generate an object (or class) abstract methods automatically according 

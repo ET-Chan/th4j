@@ -25,14 +25,16 @@
  *
  */
 
-package jth.func
+package th4j.func
+
+import th4j.generate.GenerateAllTypes
 
 import scala.annotation.StaticAnnotation
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import com.sun.jna._
-import jth.generate._
+import th4j.generate._
 /**
  * Created by et on 08/10/15.
  */

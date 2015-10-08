@@ -1,4 +1,4 @@
-name := "JTH"
+name := "TH4J"
 
 version := "1.0"
 

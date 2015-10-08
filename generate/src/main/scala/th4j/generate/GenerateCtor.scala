@@ -25,15 +25,12 @@
  *
  */
 
-package jth.generate
-
-
+package th4j.generate
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import jth.util.MacroHelper._
 
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")
