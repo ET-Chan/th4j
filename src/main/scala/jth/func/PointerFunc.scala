@@ -39,6 +39,6 @@ object PointerFunc{
   def getLong() = LongInstance
   def getDouble() = DoubleInstance
   def getByte() = ByteInstance
-  
+  def getShort() = ShortInstance
 }
 

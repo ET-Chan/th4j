@@ -17,3 +17,7 @@ libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.va
 
 scalacOptions ++= Seq("-Ymacro-debug-lite")
 
+
+//publishTo := Some(Resolver.file("file", new File("./lib")))
+//publishArtifact in (Compile, packageSrc) := false
+
