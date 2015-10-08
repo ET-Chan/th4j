@@ -37,8 +37,9 @@ import com.sun.jna._
 import jth.generate._
 import com.sun.jna.Pointer
 
-@GenerateAllTypes("Native", "TH", "TH") trait StorageFunc[T <: AnyVal, U <: AnyVal] {
-//just playing around
+@GenerateAllTypes("Native", "TH", "TH")
+trait StorageFunc[T <: AnyVal, U <: AnyVal] {
+
   def Storage_data(self:Pointer):Pointer
   def Storage_size(self:Pointer):Long 
   def Storage_elementSize():Long 

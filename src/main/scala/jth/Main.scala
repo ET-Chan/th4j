@@ -31,6 +31,7 @@ package jth
 import jth.Storage._
 import jth.Storage.FloatStorage
 import jth.func.StorageFunc
+import jth.func.TensorFunc
 import com.sun.jna._
 
 
@@ -43,6 +44,7 @@ object Main extends App {
   d.copy(l)
   println(l)
   println(d)
+  TensorFunc.IntInstance
   //  d.fill(0)
 
 //  println(d.toString)
