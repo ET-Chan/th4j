@@ -29,12 +29,12 @@
 package th4j
 
 import th4j.func
-import th4j.generate.GenerateAllTypes
+
 
 import scala.language.experimental.macros
 import th4j.func._
 import th4j.generate._
-import scala.NotImplementedError
+
 
 @GenerateAllTypes("Factory", "", "0")
 abstract class Storage[T <: AnyVal, U <: AnyVal]{
@@ -45,7 +45,7 @@ abstract class Storage[T <: AnyVal, U <: AnyVal]{
   val ops= getOps()
   val ptrOps = getPointerOps()
   val copyOps = getStorageCopyOps()
-  protected[Storage] var ptr = ops.Storage_new()
+  protected[th4j] var ptr = ops.Storage_new()
 
   /*--------------------------------------------*/
   //function with prefix `ctor' is treated differently

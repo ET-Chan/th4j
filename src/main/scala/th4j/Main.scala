@@ -32,17 +32,23 @@ import jth.Storage.FloatStorage
 import com.sun.jna._
 import th4j.func.{StorageFunc, TensorFunc}
 
+import scala.util.Try
+
 
 object Main extends App {
 
-  val d= new DoubleStorage(100)
-  val t = (0 until 100 map{_.toShort}).toArray
-  val l = new ShortStorage(100)
-  l.copy(t)
-  d.copy(l)
-  println(l)
-  println(d)
-  TensorFunc.IntInstance
+//  val d= new DoubleStorage(100)
+//  val t = (0 until 100 map{_.toShort}).toArray
+//  val l = new ShortStorage(100)
+//  l.copy(t)
+//  d.copy(l)
+//  println(l)
+//  println(d)
+//  TensorFunc.IntInstance
+//  val t:Storage[Int, Long] = null
+//  val d = Try(t.ptr)
+//  println(d.isSuccess)
+
   //  d.fill(0)
 
 //  println(d.toString)
@@ -54,5 +60,8 @@ object Main extends App {
 //  println(s)
 //  i.fill(30)
 //  println(i)
-//  println(Array[Double]().isInstanceOf[Array[Int]])
+  val d = Array.ofDim[Double](3, 3, 3)
+//  println(Array[Double]().isInstanceOf[Array[_]])
+//  val d = 0.0f
+  println(d.isInstanceOf[Array[Array[_]]])
 }

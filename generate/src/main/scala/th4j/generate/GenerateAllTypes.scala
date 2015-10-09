@@ -82,7 +82,7 @@ object generateAllTypesImpl{
     
     def modifiedCompanion(classDecl:ClassDef) = {
       //iterate through every type
-      allTypes.map{case (real, (accReal, prefix))=>{
+      allTypes.map{case (prefix, (real, accReal))=>{
         val parents = 
            AppliedTypeTree(
              Ident(

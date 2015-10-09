@@ -30,11 +30,11 @@ package object th4j {
   val defaultPrefix = "TH"
   
   val allTypes = Map(
-    "Int"   ->("Long","Int"),
-    "Float" ->("Double","Float"),
-    "Byte"  ->("Long", "Byte"),
-    "Char"  ->("Long","Char"),
-    "Short" ->("Long","Short"),
+    "Int"   ->("Int","Long"),
+    "Float" ->("Float","Double"),
+    "Byte"  ->("Byte", "Long"),
+    "Char"  ->("Char","Long"),
+    "Short" ->("Short","Long"),
     "Long" -> ("Long","Long"),
     "Double" -> ("Double","Double")
   )
