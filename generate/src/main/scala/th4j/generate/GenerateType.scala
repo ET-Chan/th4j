@@ -40,7 +40,7 @@ import th4j.util.MacroHelper._
  * There are two modes for generating abstract methods
  * 1). Native mode, in native mode, the library will bind all methods onto native library 
  * 2). Factory mode, the library will bind unimplemented mehthod  into provided class getter function.
- * 
+ * 3). Template mode, the abstract methods will be declared by a template.
  * In native mode, affix is the native library functions prefix, implSource is the native library name (e.g. "libTH.so", TH is the name)
  * 
  * In factory mode, affix is the suffix for getter functions,
@@ -49,10 +49,18 @@ import th4j.util.MacroHelper._
  * if implSource is an empty string, or some implSource are not provided, 
  * (e.g.) "StorageFunc",,"PointerFunc", then the companion objects of the return type
  * of the corresponding method will be implSource
-
+ *
+ * In Template Mode, affix is the "prefix, real, accReal", implSource and isAppendMethodName is not used
+  * templates is the template supplying for implementation of the abstract methods
+  * they are strings waiting to be interpolated. The available argument for interpolation from the first one is
+  *   (1)prefix, (2) real, (3) accReal
  * */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-class GenerateType(mode: String, affix:String, implSource: String, isAppendMethodName: String) extends StaticAnnotation{
+class GenerateType(mode: String,
+                   affix:String,
+                   implSource: String,
+                   isAppendMethodName: String,
+                   templates: String*) extends StaticAnnotation{
   def macroTransform(annottees: Any*):Any = macro generateType.impl
 }
 
@@ -61,9 +69,9 @@ object generateType{
     import c.universe._
     
    
-    val mode :: affix :: implSource :: isAppendMethodName :: Nil = getAnnnotationArgs(c)
+    val mode :: affix :: implSource :: isAppendMethodName :: templates = getAnnnotationArgs(c)
     
-    assert(mode == "Native" | mode == "Factory")
+    assert(mode == "Native" | mode == "Factory" | mode == "Template")
     
     def expandObject(moduleDecl:Any):c.Expr[Any]={
       //Fix this boilerplate code
@@ -92,10 +100,7 @@ object generateType{
             .withStart(defaultImplPos.startOrPoint + 1)
             .withPoint(defaultImplPos.point + 1)
             
-//      parent.decls.filter (_.name.toString().startsWith("ctor")).foreach (s=>{
-//        println(s.annotations)
-//      })
-      //Only used in factory mode.
+
       val implSources = implSource.split(",")
       var idx = 0
       val moddedMethods = parent
@@ -112,15 +117,7 @@ object generateType{
         }}.unzip
         val binderMethodName = TermName(affix  + 
             {if (isAppendMethodName == "1") methodName.toString else ""})
-//        if (s.annotations.nonEmpty){
-//          println("Showing!")
-//          println(showRaw(s.annotations.head))
-//          println("After")
-////          assert(false)
-//        }
-//        
-//        println("after")
-//        
+
           if (mode == "Native" & s.isAbstract){
             List(q"""@native def $binderMethodName (..$valDefParams):$retType""",
                 q"""override def $methodName(..$valDefParams) = $binderMethodName(..$callParams)""")
@@ -150,6 +147,12 @@ object generateType{
             }else{
               List()
             }
+          }else if (mode == "Template"){
+            val template = templates(idx)
+            idx = idx + 1
+            val Array(prefix, real, accReal) = affix.split(",")
+            val parsedTemplate = c.parse(template.format(prefix, real, accReal))
+            List(q"""override def $methodName(..$valDefParams) = $parsedTemplate""")
           }else{ //impossible to reach
             List()
            }
@@ -167,16 +170,15 @@ object generateType{
        val ret =  c.Expr[Any](
           ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList)) 
         )
-        showRaw(ret)
         ret
-        
-        
+      }else if (mode == "Template"){
+        c.Expr[Any](
+          ModuleDef(mods, name.toTermName, Template(parents, self, body ++ moddedMethods.toList))
+        )
       }else {//impossible to be here
         c.Expr[Any](q"")
-        
       }
-      
-      
+
     }
     
     /*-------------------------------------------*/

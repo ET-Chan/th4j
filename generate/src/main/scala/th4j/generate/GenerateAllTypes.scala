@@ -42,6 +42,8 @@ import th4j.util.MacroHelper._
  * There are two modes for generating abstract methods
  * 1). Native mode, in native mode, the library will bind all methods onto native library 
  * 2). Factory mode, the library will bind unimplemented mehthod into provided class getter function.
+ * 3). Template mode, the library will bind unimplemented method according to provided templates
+ *
  * In native mode, binderName is the native library providing the necessary libraries, 
  * affix is the prefix needed to be prepended to generated helper instances.
  * 
@@ -51,11 +53,13 @@ import th4j.util.MacroHelper._
  * then the companion object of the return type of the corresponding methods will be used as binder.
  * affix is used to indicate
  * whether appended original methodName to the generated method
- * 
+ *
+ * In Template mode, binderName and affix is not used. templates are the declaration templates
+ * to be interpolated.
  * 
  * */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-class GenerateAllTypes(mode: String, binderName: String, affix: String) extends StaticAnnotation{
+class GenerateAllTypes(mode: String, binderName: String, affix: String, templates:String*) extends StaticAnnotation{
   def macroTransform(annottees: Any*):Any = macro generateAllTypesImpl.impl
 }
 
@@ -67,7 +71,7 @@ object generateAllTypesImpl{
   def impl(c:Context)(annottees: c.Expr[Any]*):c.Expr[Any]={
     import c.universe._
 
-    val mode :: binderName :: affix :: Nil = getAnnnotationArgs(c)
+    val mode :: binderName :: affix :: templates = getAnnnotationArgs(c)
     
 //    /*-----------------------------------*/
     /*
@@ -78,19 +82,19 @@ object generateAllTypesImpl{
      * 
      * */
     
-    assert(mode == "Native" | mode == "Factory", "Not recognized mode")
-    
+    assert(mode == "Native" | mode == "Factory" | mode == "Template", "Not recognized mode")
+
     def modifiedCompanion(classDecl:ClassDef) = {
       //iterate through every type
       allTypes.map{case (prefix, (real, accReal))=>{
-        val parents = 
+        val parents =
            AppliedTypeTree(
              Ident(
-                 classDecl.name), 
+                 classDecl.name),
              List(
-                 Ident(TypeName(real)), 
+                 Ident(TypeName(real)),
                  Ident(TypeName(accReal))))
-                 
+
         val getterName = TermName("get"+prefix)
         
         if (mode == "Native"){
@@ -104,8 +108,13 @@ object generateAllTypesImpl{
           val clazzName = TypeName(prefix + classDecl.name)
          (q"""
             @GenerateType("Factory", ${"get" + prefix}, $binderName, $affix) class $clazzName extends $parents
-          """,q"""def $getterName = new $clazzName""")
+          """,q"""def $getterName() = new $clazzName""")
           
+        }else if (mode == "Template"){
+          val instanceName = TermName(prefix + classDecl.name)
+          val combined = s"$prefix,$real,$accReal"
+          (q"""@GenerateType("Template",$combined,"","",$templates) object $instanceName extends $parents""",
+            q"""def $getterName() = $instanceName""")
         }else{
           (q"",q"")
         }

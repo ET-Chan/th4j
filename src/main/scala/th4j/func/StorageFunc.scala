@@ -53,7 +53,7 @@ trait StorageFunc[T <: AnyVal, U <: AnyVal] {
 //  def Storage_clearFlag(storage:Pointer, flag:Byte):Unit
   def Storage_retain(storage:Pointer):Unit
   def Storage_free(storage:Pointer):Unit
-  def Storage_newWithData(data: Array[T], size: Long):Pointer
+//  def Storage_newWithData(data: Array[T], size: Long):Pointer <--this is problematic
 //  def Storage_newWithDataAndAllocator(data: Array[T], size:Long, allocator:Pointer, allocatorContext:Pointer):Pointer
 //  def Storage_resize(storage:Pointer, size:Long)
   def Storage_fill(storage:Pointer, value:T):Unit

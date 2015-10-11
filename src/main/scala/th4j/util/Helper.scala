@@ -1,5 +1,3 @@
-
-
 /*
  * The MIT License (MIT)
  *
@@ -27,27 +25,12 @@
 
 package th4j.util
 
-import scala.reflect.macros.whitebox.Context
-
-object MacroHelper {
-   def getAnnnotationArgs(c:Context):List[String]={
-      import c.universe._
-      c.prefix.tree match {
-        case q"""new $clazz(..$expParams)""" => {
-          expParams
-            .flatMap{
-              case Literal(Constant(arg)) => List(arg.toString)
-              case q"""scala.collection.immutable.List(..$expParams)""" => {
-                expParams.map{case Literal(Constant(arg))=> arg.toString}
-              }
-              case t => {
-                println(showRaw(t))
-                assert(false)
-                List("")
-              }
-            }
-        } 
-        
-      }
-    }
+/**
+ * Created by et on 11/10/15.
+ */
+object Helper {
+  def IterateL(start:Long, end:Long, step:Long = 1):Iterator[Long]={
+    val d = for (i<- (start until end by step).view) yield i
+    d.iterator
+  }
 }

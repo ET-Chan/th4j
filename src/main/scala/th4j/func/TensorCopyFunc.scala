@@ -1,5 +1,3 @@
-
-
 /*
  * The MIT License (MIT)
  *
@@ -25,29 +23,25 @@
  *
  */
 
-package th4j.util
+package th4j.func
+import scala.annotation.StaticAnnotation
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import scala.language.experimental.macros
+import com.sun.jna._
+import th4j.generate._
 
-import scala.reflect.macros.whitebox.Context
-
-object MacroHelper {
-   def getAnnnotationArgs(c:Context):List[String]={
-      import c.universe._
-      c.prefix.tree match {
-        case q"""new $clazz(..$expParams)""" => {
-          expParams
-            .flatMap{
-              case Literal(Constant(arg)) => List(arg.toString)
-              case q"""scala.collection.immutable.List(..$expParams)""" => {
-                expParams.map{case Literal(Constant(arg))=> arg.toString}
-              }
-              case t => {
-                println(showRaw(t))
-                assert(false)
-                List("")
-              }
-            }
-        } 
-        
-      }
-    }
+/**
+ * Created by et on 10/10/15.
+ */
+@GenerateAllTypes("Native", "TH", "TH")
+trait TensorCopyFunc[T<:AnyVal, U<:AnyVal] {
+  def Tensor_copy(tensor:Pointer, src: Pointer)
+  def Tensor_copyByte(tensor:Pointer, src: Pointer)
+  def Tensor_copyChar(tensor:Pointer, src: Pointer)
+  def Tensor_copyShort(tensor:Pointer, src: Pointer)
+  def Tensor_copyInt(tensor:Pointer, src: Pointer)
+  def Tensor_copyLong(tensor:Pointer, src: Pointer)
+  def Tensor_copyFloat(tensor:Pointer, src: Pointer)
+  def Tensor_copyDouble(tensor:Pointer, src: Pointer)
 }

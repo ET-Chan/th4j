@@ -27,41 +27,39 @@
 
 package th4j
 
-import jth.Storage._
-import jth.Storage.FloatStorage
-import com.sun.jna._
-import th4j.func.{StorageFunc, TensorFunc}
+import java.nio.ByteOrder
 
-import scala.util.Try
+import com.sun.jna._
+import th4j.Storage._
+import th4j.Tensor.{DoubleTensor, IntTensor}
+import th4j.func._
+
+import scala.util.{Random, Try}
 
 
 object Main extends App {
 
-//  val d= new DoubleStorage(100)
-//  val t = (0 until 100 map{_.toShort}).toArray
-//  val l = new ShortStorage(100)
-//  l.copy(t)
-//  d.copy(l)
-//  println(l)
-//  println(d)
-//  TensorFunc.IntInstance
-//  val t:Storage[Int, Long] = null
-//  val d = Try(t.ptr)
-//  println(d.isSuccess)
-
-  //  d.fill(0)
-
-//  println(d.toString)
-//  println(d)
-
-//  val t = new Storage.IntStorage(10)
-//  val s = new IntStorage(10)
-//  s.fill(1)
-//  println(s)
-//  i.fill(30)
-//  println(i)
-  val d = Array.ofDim[Double](3, 3, 3)
-//  println(Array[Double]().isInstanceOf[Array[_]])
-//  val d = 0.0f
-  println(d.isInstanceOf[Array[Array[_]]])
+//  val d = new DoubleStorage(10)
+//  for {i<- 0 until 10}{
+//    d(i) = Random.nextDouble() * 10
+//    d(i) = -0.01
+//  }
+//  import th4j.util.BeautifulPrinter._
+//  val sb = new StringBuilder
+//  print2d((0 until 24).iterator, 3, 8, sb)
+//  println(sb)
+//  val arr = Array.ofDim[Double](12)
+//  for{i<-0 until 3
+//      j<-0 until 4}{
+//    arr(i)(j) = i*4 + j
+////    println(arr(i)(j))
+//  }
+  val arr = Array.tabulate[Double](3, 4){case (i, j)=> i*4 + j}
+//  val arr = Array.tabulate[Double](12)(i=>i)
+  val t = new DoubleTensor(arr)
+  t.iterator().foreach(println)
+//  println(t.size(), t.stride(), t.storage())
+  println(t.storage())
+//  val t = new DoubleTensor(3, 4)
 }
+

@@ -28,45 +28,49 @@
 package th4j.func
 
 import com.sun.jna._
-import th4j.func
+import th4j.Storage
+import th4j.Storage._
 import th4j.generate._
 
 
-//for this trait, I won't bother using macro, it is overkilling
 
-trait PointerFunc[T <: AnyVal] {
+
+@GenerateAllTypes("Template","","","ptr.get%2$sArray(offset, size)", "ptr.write(offset, buf, index, length)" ,"new %1$sStorage(ptr)")
+trait PointerFunc[T <: AnyVal, U<:AnyVal] {
   def Array(ptr: Pointer, offset:Long, size:Int) : Array[T]
+  def Write(ptr: Pointer, offset:Long, buf:Array[T], index:Int, length:Int)
+  def Storage(ptr: Pointer):Storage[T, U]
 }
 
-object PointerFunc{
-  object IntInstance extends PointerFunc[Int]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getIntArray(offset, size)
-  }
-  object FloatInstance extends PointerFunc[Float]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getFloatArray(offset, size)
-  }
-  object ByteInstance extends PointerFunc[Byte]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getByteArray(offset, size)
-  }
-  object ShortInstance extends PointerFunc[Short]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getShortArray(offset, size)
-  }
-  object DoubleInstance extends PointerFunc[Double]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getDoubleArray(offset, size)
-  }  
-  object LongInstance extends PointerFunc[Long]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getLongArray(offset, size)
-  }
-  object CharInstance extends PointerFunc[Char]{
-    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getCharArray(offset, size)
-  }
-  
-  def getFloat() = FloatInstance
-  def getInt()  = IntInstance
-  def getChar() = CharInstance
-  def getLong() = LongInstance
-  def getDouble() = DoubleInstance
-  def getByte() = ByteInstance
-  def getShort() = ShortInstance
-}
+//object PointerFunc{
+//  object IntInstance extends PointerFunc[Int]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getIntArray(offset, size)
+//  }
+//  object FloatInstance extends PointerFunc[Float]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getFloatArray(offset, size)
+//  }
+//  object ByteInstance extends PointerFunc[Byte]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getByteArray(offset, size)
+//  }
+//  object ShortInstance extends PointerFunc[Short]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getShortArray(offset, size)
+//  }
+//  object DoubleInstance extends PointerFunc[Double]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getDoubleArray(offset, size)
+//  }
+//  object LongInstance extends PointerFunc[Long]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getLongArray(offset, size)
+//  }
+//  object CharInstance extends PointerFunc[Char]{
+//    override def Array(ptr:Pointer, offset:Long, size:Int) = ptr.getCharArray(offset, size)
+//  }
+//
+//  def getFloat() = FloatInstance
+//  def getInt()  = IntInstance
+//  def getChar() = CharInstance
+//  def getLong() = LongInstance
+//  def getDouble() = DoubleInstance
+//  def getByte() = ByteInstance
+//  def getShort() = ShortInstance
+//}
 

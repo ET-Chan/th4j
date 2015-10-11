@@ -28,9 +28,15 @@
 
 package th4j
 
-import th4j.func
 
+import java.io.{BufferedWriter, PrintWriter}
+import java.nio.file.Files
 
+import com.sun.jna._
+import th4j.util.Helper._
+
+import scala.collection.IterableView
+import scala.io.Source
 import scala.language.experimental.macros
 import th4j.func._
 import th4j.generate._
@@ -39,9 +45,9 @@ import th4j.generate._
 @GenerateAllTypes("Factory", "", "0")
 abstract class Storage[T <: AnyVal, U <: AnyVal]{
   //abstract method that needed to be implemented
-  def getOps():func.StorageFunc[T, U]
-  def getPointerOps():func.PointerFunc[T]
-  def getStorageCopyOps():func.StorageCopyFunc[T, U]
+  protected def getOps():func.StorageFunc[T, U]
+  protected def getPointerOps():func.PointerFunc[T, U]
+  protected def getStorageCopyOps():func.StorageCopyFunc[T, U]
   val ops= getOps()
   val ptrOps = getPointerOps()
   val copyOps = getStorageCopyOps()
@@ -50,41 +56,44 @@ abstract class Storage[T <: AnyVal, U <: AnyVal]{
   /*--------------------------------------------*/
   //function with prefix `ctor' is treated differently
   //be cautious while overriding.
-  def ctor1(size:Long){
+  protected def ctor1(size:Long){
     freePtr()
     ptr = ops.Storage_newWithSize(size)
   }
 
-  def ctor2(arr:Array[T]){
+  protected def ctor2(arr:Array[T]){
     freePtr()
-    ptr = ops.Storage_newWithData(arr, arr.length)
+    ptr = ops.Storage_newWithSize(arr.length)
+    copyOps.Storage_rawCopy(ptr, arr)
   }
 
+  protected def ctor3(ref:Pointer) ={
+    //This constructor is very dangerous and should not use normally.
+    freePtr()
+    ptr = ref
+  }
   /*------------------------------------------*/
   def size() = ops.Storage_size(ptr)
-
-  def get(idx:Long) = {ops.Storage_get(ptr, idx);this}
-  def apply = get _
+  def elementSize() = ops.Storage_elementSize()
+  def get(idx:Long) = {ops.Storage_get(ptr, idx)}
+  def apply(idx:Long) = get(idx)
 
   def set(idx:Long, value:T) = {ops.Storage_set(ptr, idx, value);this}
-  def update = set _
+  def update(idx:Long, value:T) = set(idx, value)
 
   //I only come up with this solution, as type erasure erase all
   //type information
   def copy(src: Storage[_, _]) ={
     //Why I need to import? may be the macro messes something with the compiler.
-    import jth.Storage._
+    import th4j.Storage._
 
     src match  {
       case src: IntStorage=>
         copyOps.Storage_copyInt(ptr, src.ptr)
-
       case src: FloatStorage=>
         copyOps.Storage_copyFloat(ptr, src.ptr)
-
       case src: ByteStorage =>
         copyOps.Storage_copyByte(ptr, src.ptr)
-
       case src:CharStorage=>
         copyOps.Storage_copyChar(ptr, src.ptr)
       case src:ShortStorage=>
@@ -105,14 +114,22 @@ abstract class Storage[T <: AnyVal, U <: AnyVal]{
     this
   }
 
+  def iterator(from:Long = 0)=IterateL(from, size()).map(get)
+
   def fill(value:T) = {ops.Storage_fill(ptr, value);this}
   override def toString:String={
-    val sz = size().toInt
-    val str = ptrOps.Array(ops.Storage_data(ptr), 0, sz).mkString("\n")
-    s"$str\n[${this.getClass.getSimpleName} of size $sz]"
+    val sb = new StringBuilder()
+    import th4j.util.BeautifulPrinter._
+    print1d(iterator(),sb)
+    sb ++= s"[${this.getClass.getSimpleName} of size ${size}]\n"
+    sb.mkString
   }
   /*------------------------------------------*/
-
+  //The following method is not safe to use for normal user
+  def getRawData()={
+    ops.Storage_data(ptr)
+  }
+  /*------------------------------------------*/
 
   override def finalize(){
     freePtr()

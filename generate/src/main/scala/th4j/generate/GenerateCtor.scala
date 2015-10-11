@@ -44,12 +44,11 @@ object generateCtor{
     /*-------------------------------------------------*/
     def expandMethod(methodDef:DefDef):c.Expr[Any]={
       //extract everything out
-      val DefDef(_, name, tparams, vparamss, tpt, rhs) = methodDef
+      val DefDef(mods, name, tparams, vparamss, tpt, rhs) = methodDef
       //we make three assumptions
-      //(1), no modifiers
-      //(2), no type parameters
-      //(3), no currying
-      //(4), primary constructor takes no parameter.
+      //(1), no type parameters
+      //(2), no currying
+      //(3), primary constructor takes no parameter.
       //Now, we generate corresponding constructor and appoint to a this function
       
       val callParams = vparamss.map(_.map(_.name))
@@ -61,11 +60,7 @@ object generateCtor{
                       }
                     """
       val modMethodDef = DefDef(
-          Modifiers(NoFlags, 
-              typeNames.EMPTY, 
-              List(Apply(Select(New(Ident(TypeName("GeneratedCtor"))),
-                 termNames.CONSTRUCTOR), List()))),
-                 name, tparams, vparamss, tpt, rhs)
+          mods, name, tparams, vparamss, tpt, rhs)
       c.Expr[Any](q"""
           $modMethodDef
           $thisDef
