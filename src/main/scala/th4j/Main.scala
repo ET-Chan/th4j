@@ -54,12 +54,14 @@ object Main extends App {
 //    arr(i)(j) = i*4 + j
 ////    println(arr(i)(j))
 //  }
-  val arr = Array.tabulate[Double](3, 4){case (i, j)=> i*4 + j}
+  val arr = Array.tabulate[Double](3, 4, 5){case (i, j, k)=> i*20 + j*5 + k}
 //  val arr = Array.tabulate[Double](12)(i=>i)
   val t = new DoubleTensor(arr)
-  t.iterator().foreach(println)
+//  t.iterator().foreach(println)
 //  println(t.size(), t.stride(), t.storage())
-  println(t.storage())
-//  val t = new DoubleTensor(3, 4)
+//  println(t.storage())
+//  val t = new DoubleTe
+  // nsor(3, 4)
+  println(t)
 }
 

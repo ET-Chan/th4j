@@ -30,6 +30,8 @@ import java.text.{DecimalFormatSymbols, DecimalFormat, NumberFormat}
 
 import th4j.{Storage, Tensor}
 
+import scala.collection.mutable
+
 /**
  * Created by et on 10/10/15.
  */
@@ -57,23 +59,23 @@ object BeautifulPrinter {
       sb += '\n'
     })
   }
-  def print1d(tensor:Tensor[_, _], sb:StringBuilder): Unit ={
-    val nd = tensor.nDimension()
-    if (nd != 1) {
-      throw new Exception(s"print1d, only can be invoked on 1d tensor, is called on ${nd}d tensor")
-    }
-    val sz = tensor.size(0)
-    import Helper._
-    IterateL(0, sz).map(tensor(_))
-  }
-  def print2d(tensor:Tensor[_,_], sb:StringBuilder):Unit = {
-    val nd = tensor.nDimension()
-    if (nd != 2){
-      throw new Exception(s"print2d, only can be invoked on 2d tensor, is called on ${nd}d tensor")
-    }
-    import Helper._
+//  def print1d(tensor:Tensor[_, _], sb:StringBuilder): Unit ={
+//    val nd = tensor.nDimension()
+//    if (nd != 1) {
+//      throw new Exception(s"print1d, only can be invoked on 1d tensor, is called on ${nd}d tensor")
+//    }
+//    val sz = tensor.size(0)
+//    import Helper._
+//    IterateL(0, sz).map(tensor(_))
+//  }
+//  def print2d(tensor:Tensor[_,_], sb:StringBuilder):Unit = {
+//    val nd = tensor.nDimension()
+//    if (nd != 2){
+//      throw new Exception(s"print2d, only can be invoked on 2d tensor, is called on ${nd}d tensor")
+//    }
+//    print2d(tensor.iterator(), tensor.size(0).toInt, tensor.size(1).toInt, sb)
+//  }
 
-  }
   def print2d(it:Iterator[_], size0:Int, size1:Int, sb:StringBuilder) = {
     val strs = Array.ofDim[String](size0, size1)
     val maxwidths = Array.ofDim[Int](size1)
@@ -108,8 +110,9 @@ object BeautifulPrinter {
     //populate strings to sb
     for{i<- 0 until size1/lastcol} {
       val startcol =  i * lastcol
-      val endcol = math.max(i*lastcol, size1)
-      sb ++= s"Columns from ${startcol} to ${endcol - 1}\n"
+      val endcol = math.min((i+1)*lastcol, size1)
+      if (lastcol != size1)
+        sb ++= s"Columns from ${startcol} to ${endcol - 1}\n"
       for{k<- 0 until size0}{
         for{j<- startcol until endcol}{
           sb ++= " " * (maxwidths(j % lastcol) - strs(k)(j).length)
@@ -118,5 +121,44 @@ object BeautifulPrinter {
         sb += '\n'
       }
     }
+  }
+
+
+  def printnd(tensor:Tensor[_,_], sb:StringBuilder)={
+    //printn arbitrary tensor
+
+    val it = tensor.iterator()
+    val nd = tensor.nDimension()
+    val sizes = tensor.size()
+    lazy val size0 = sizes(nd - 2)
+    lazy val size1 = sizes(nd - 1)
+
+    def recurPrint(aux: collection.mutable.Stack[Long]):Unit = {
+      val curDim = aux.length
+      if (curDim == nd - 1) {
+        //this only occurs while the original tensor is 1d.
+        print1d(it, sb)
+      }else if(curDim == nd - 2) {
+        if (nd > 2)
+          sb ++= "(" + aux.mkString(",") + ",.,.)=\n"
+        print2d(it,size0.toInt, size1.toInt, sb)
+      }else{//curDim < nd - 2
+        val curSize = sizes(curDim)
+        (0L until curSize).foreach(i=>{
+          aux.push(i)
+          recurPrint(aux)
+          aux.pop()
+        })
+      }
+    }
+
+    recurPrint(new mutable.Stack[Long]())
+
+
+
+//    def recurPrint(curDim:Int): Unit ={
+//      if (nd)
+//    }
+
   }
 }

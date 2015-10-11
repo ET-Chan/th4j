@@ -47,11 +47,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   protected def getOps():func.TensorFunc[T, U]
   protected def getPointerOps():func.PointerFunc[T, U]
   protected def getCopyOps():func.TensorCopyFunc[T, U]
+  protected def getMathOps():func.TensorMathFunc[T, U]
   def getStorageOps():func.StorageFunc[T, U]
   val ops = getOps()
   val copyOps = getCopyOps()
   val ptrOps = getPointerOps()
   val storageOps = getStorageOps()
+  def mathOps = getMathOps()
   protected [th4j] var ptr = ops.Tensor_new()
 
   /*------------------------------------------*/
@@ -211,38 +213,27 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
 
   /*--------------------------------------------------*/
-//  def get(x0:Long):T = {
-//    ops.Tensor_get1d(ptr, x0)
-//  }
-//  def get(x0:Long, x1:Long):T = {
-//    ops.Tensor_get2d(ptr, x0, x1)
-//  }
-//  def get(x0:Long, x1:Long, x2:Long):T = {
-//    ops.Tensor_get3d(ptr, x0, x1, x2)
-//  }
-//  def get(x0:Long, x1:Long, x2:Long, x3:Long):T = {
-//    ops.Tensor_get4d(ptr, x0, x1, x2, x3)
-//  }
 
 //Still not sure if it is a good way to go
-  def get(xs:Long*):T={
-    val nd = nDimension()
-    if(xs.length > nd) throw new Exception(s"Quering is out of bound on this ${nd}d tensors")
-    xs match {
-      case x0 :: Nil =>
-        ops.Tensor_get1d(ptr, x0)
-      case x0::x1::Nil =>
-        ops.Tensor_get2d(ptr, x0, x1)
-      case x0::x1::x2::Nil=>
-        ops.Tensor_get3d(ptr, x0, x1, x2)
-      case x0::x1::x2::x3::Nil=>
-        ops.Tensor_get4d(ptr, x0, x1, x2, x3)
-      case _=>
-        throw new NotImplementedException()
-    }
-  }
-  def apply(xs:Long*):T =  get(xs:_*)
+//  def get(xs:Long*):T={
+//    val nd = nDimension()
+//    if(xs.length > nd) throw new Exception(s"Quering is out of bound on this ${nd}d tensors")
+//    xs match {
+//      case x0 :: Nil =>
+//        ops.Tensor_get1d(ptr, x0)
+//      case x0::x1::Nil =>
+//        ops.Tensor_get2d(ptr, x0, x1)
+//      case x0::x1::x2::Nil=>
+//        ops.Tensor_get3d(ptr, x0, x1, x2)
+//      case x0::x1::x2::x3::Nil=>
+//        ops.Tensor_get4d(ptr, x0, x1, x2, x3)
+//      case _=>
+//        throw new NotImplementedException()
+//    }
+//  }
+//  def apply(xs:Long*):T =  get(xs:_*)
 
+//  def get()
 
   def iterator() = {
 
@@ -255,44 +246,20 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
       val storageOffset = this.storageOffset()
       def iterateSub(curDim: Int, start: Long):Iterator[T] = {
         if (curDim == nd) {//impossible
-          //not likely to stop here, but if stops here, then
-//          Iterator(storage.get(storageOffset + aux.pop()))
           throw new Exception("Impossible")
         } else if (curDim == nd - 1) {
-          IterateL(0, size(nd - 1)).map(i => storage(start + storageOffset + stride(nd - 1) * i))
+          IterateL(0, size(nd - 1)).map(i => storage(start + stride(nd - 1) * i))
         } else{
           IterateL(0L,size(curDim)).map(i=>{
 //            aux.push(i * stride(curDim) + start)
             iterateSub(curDim + 1, i * stride(curDim) + start)
-//            val it = iterateSub(aux)
-//            aux.pop()
-//            it
           }).flatten
         }
       }
-      iterateSub(0, 0)
+      iterateSub(0, storageOffset)
     }
   }
 
-//  def iterator(offset:Long, from:Long*) = {
-//    val sizes = size()
-//    val strides = stride()
-//    val storagePtr = ops.Tensor_storage(ptr)
-//      new Iterator[T]{
-//        val i = from.toArray
-//        val pos = getPos(i:_*)
-//        val last = getPos(sizes
-//                        .iterator()
-//                        .map(_ - 1)
-//                        .toList:_*)
-//        override def hasNext: Boolean = pos != last
-//
-//        override def next(): T = {
-//          storageOps.Storage_get(storagePtr, pos)
-////          advancePos(i)
-//        }
-//      }
-//    }
 
 
 
@@ -341,29 +308,70 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   def storageOffset():Long = {
     ops.Tensor_storageOffset(ptr)
   }
+  def isContiguous():Boolean = {
+    ops.Tensor_isContiguous(ptr) == 1
+  }
+
+  def isSize(targetSize: LongStorage):Boolean = {
+    ops.Tensor_isSize(ptr, targetSize.ptr) == 1
+  }
+  def isSameSizeAs(targetTensor:Tensor[_, _]):Boolean = {
+    ops.Tensor_isSameSizeAs(ptr, targetTensor.ptr) == 1
+  }
+  def nElement():Long = {
+    ops.Tensor_nElement(ptr)
+  }
   /*--------------------------------------------------*/
-//  override def toString():String={
-//    val sb = new StringBuilder
-//    nDimension() match {
-//      case 1=>
-//        print1d(this, sb)
-//
-//    }
-//    sb.toString()
-//  }
+  def set(targetTensor:Tensor[T, U]): Tensor[T, U] ={
+    ops.Tensor_set(ptr, targetTensor.ptr)
+    this
+  }
+  def set(storage:Storage[T, U], storageOffset:Long, sizes:LongStorage, strides:LongStorage):Tensor[T, U] = {
+    ops.Tensor_setStorage(ptr,
+      storage.ptr,
+      storageOffset,
+      Try(sizes.ptr).getOrElse(null),
+      Try(strides.ptr).getOrElse(null))
+    this
+  }
+  def set(storage:Storage[T, U]):Tensor[T, U] = set(storage, 0, null, null)
+  def set(storage:Storage[T, U], storageOffset:Long, sizes:LongStorage):Tensor[T, U] = set(storage, storageOffset, sizes, null)
+  /*--------------------------------------------------*/
+  def copy(src:Tensor[_, _]) = {
+    import th4j.Tensor._
+    src match {
+      case src: IntTensor=>
+        copyOps.Tensor_copyInt(ptr, src.ptr)
+      case src: FloatTensor=>
+        copyOps.Tensor_copyFloat(ptr, src.ptr)
+      case src: ByteTensor =>
+        copyOps.Tensor_copyByte(ptr, src.ptr)
+      case src:CharTensor=>
+        copyOps.Tensor_copyChar(ptr, src.ptr)
+      case src:ShortTensor=>
+        copyOps.Tensor_copyShort(ptr, src.ptr)
+      case src:LongTensor=>
+        copyOps.Tensor_copyLong(ptr, src.ptr)
+      case src:DoubleTensor=>
+        copyOps.Tensor_copyDouble(ptr, src.ptr)
+      case _=>
+        throw new Exception("Unknown type of tensor.")
+    }
+    this
+  }
 
-
-  def tensorToString(sb:StringBuilder) = {
-    ""
+  def fill(value: T) = {
+    mathOps.Tensor_fill(ptr, value)
+    this
   }
 
 
-  def tensorToString2d(sb:StringBuilder, size0:Long, size1:Long) = {
-    ""
-  }
-
-  def tensorToString1d(sb:StringBuilder, size0:Long) = {
-
+  /*--------------------------------------------------*/
+  override def toString():String={
+    val sb = new StringBuilder
+    printnd(this, sb)
+    sb ++= s"[${this.getClass.getSimpleName} of size ${size().iterator().mkString("x")}]\n"
+    sb.mkString
   }
 
 
