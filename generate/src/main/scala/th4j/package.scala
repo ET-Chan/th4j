@@ -38,5 +38,5 @@ package object th4j {
     "Long" -> ("Long","Long"),
     "Double" -> ("Double","Double")
   )
- 
+
 }

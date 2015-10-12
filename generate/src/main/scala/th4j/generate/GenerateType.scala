@@ -143,7 +143,13 @@ object generateType{
                   this()
                   $methodName(..$callParams)
                 }
-              """)
+              """,
+              q"""
+                 def create(..$valDefParams) = {
+                    new ${name.toTypeName}(..$callParams)
+                 }
+
+               """)
             }else{
               List()
             }

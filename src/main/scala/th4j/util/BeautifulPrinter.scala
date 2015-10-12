@@ -59,22 +59,6 @@ object BeautifulPrinter {
       sb += '\n'
     })
   }
-//  def print1d(tensor:Tensor[_, _], sb:StringBuilder): Unit ={
-//    val nd = tensor.nDimension()
-//    if (nd != 1) {
-//      throw new Exception(s"print1d, only can be invoked on 1d tensor, is called on ${nd}d tensor")
-//    }
-//    val sz = tensor.size(0)
-//    import Helper._
-//    IterateL(0, sz).map(tensor(_))
-//  }
-//  def print2d(tensor:Tensor[_,_], sb:StringBuilder):Unit = {
-//    val nd = tensor.nDimension()
-//    if (nd != 2){
-//      throw new Exception(s"print2d, only can be invoked on 2d tensor, is called on ${nd}d tensor")
-//    }
-//    print2d(tensor.iterator(), tensor.size(0).toInt, tensor.size(1).toInt, sb)
-//  }
 
   def print2d(it:Iterator[_], size0:Int, size1:Int, sb:StringBuilder) = {
     val strs = Array.ofDim[String](size0, size1)

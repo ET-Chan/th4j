@@ -1,5 +1,3 @@
-
-
 /*
  * The MIT License (MIT)
  *
@@ -27,32 +25,28 @@
 
 package th4j
 
-import java.nio.ByteOrder
+/**
+ * Created by et on 12/10/15.
+ */
+package object util {
 
-import com.sun.jna._
-import th4j.Storage._
-import th4j.Tensor.{FloatTensor, DoubleTensor, IntTensor}
-import th4j.func._
-import th4j.util._
-import scala.util.{Random, Try}
+  class SingletonPair(num:Long) extends Tuple2[Long, Long](num, num + 1)
 
+//  type L[X] = X =>Long
 
-object Main extends App {
+  implicit def toLong(from:Int):Long = from.toLong
 
-//  println(t)
-  val s = new FloatStorage(10).fill(1)
-//  val t = 2::5
-//  val t = 5 :: 2
+  implicit def numToSingeletonPair[A](a:A)(implicit ev1:A=>Long):(Long, Long) = new SingletonPair(a)
+  implicit def pairToList[A](a:A)(implicit ev1:A=>(Long, Long)):List[(Long, Long)] = List(a)
+  implicit def arrToLongArr[A](a:Array[A])(implicit ev1:A=>Long):Array[Long] = a.map(ev1)
 
-//  println(d)
-//  val x = new FloatTensor(s,0,new LongStorage((2::5):Array[Long]))
+//  implicit def listToLongArr[A](a:List[A])(implicit ev1:A=>Long):Array[Long] = a.map(ev1).toArray
 
+  implicit def longToList[A](a:A)(implicit ev1:A=>Long):List[Long] = List(a)
+  implicit def toLong(from:Long):Long = from
 
-//  val t:(Long, Long) = 0
-//  println(x(0::1))
-//  println(x(List(0L)))
-//  x(1) = 1
-//  println(x)
+  implicit def listToArray(a:List[Long]):Array[Long] = a.toArray
+//  implicit def numToSingletonPair[A:L](from:A):SingletonPair = new SingletonPair(from)
 
+//  implicit def pairToList(from: (Long, Long)):List[(Long, Long)] = List(from)
 }
-

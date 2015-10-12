@@ -33,6 +33,7 @@ import java.io.{BufferedWriter, PrintWriter}
 import java.nio.file.Files
 
 import com.sun.jna._
+import th4j.Storage.LongStorage
 import th4j.util.Helper._
 
 import scala.collection.IterableView

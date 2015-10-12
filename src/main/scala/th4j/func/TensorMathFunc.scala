@@ -108,7 +108,7 @@ trait TensorMathFunc [T<:AnyVal, U<:AnyVal]{
   def Tensor_tril(r:Pointer, t:Pointer, k:Long):Unit
   def Tensor_triu(r:Pointer, t:Pointer, k:Long):Unit
   def Tensor_cat(r:Pointer, ta:Pointer, tb:Pointer, dimension:Int):Unit
-  def Tensor_catArray(result:Pointer, inputs:Pointer, numInputs:Int, dimension:Int):Unit
+//  def Tensor_catArray(result:Pointer, inputs:Pointer, numInputs:Int, dimension:Int):Unit
 
   def Tensor_ltValue(r:Pointer, t:Pointer, value:T):Unit
   def Tensor_leValue(r:Pointer, t:Pointer, value:T):Unit
