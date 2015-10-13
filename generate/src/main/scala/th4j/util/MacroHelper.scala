@@ -40,6 +40,9 @@ object MacroHelper {
               case q"""scala.collection.immutable.List(..$expParams)""" => {
                 expParams.map{case Literal(Constant(arg))=> arg.toString}
               }
+              case q"""List(..$expParams)""" => {
+                expParams.map{case Literal(Constant(arg))=> arg.toString}
+              }
               case t => {
                 println(showRaw(t))
                 assert(false)

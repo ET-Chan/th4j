@@ -36,23 +36,12 @@ import th4j.func._
 import th4j.util._
 import scala.util.{Random, Try}
 
-
 object Main extends App {
-
-//  println(t)
-  val s = new FloatStorage(10).fill(1)
-//  val t = 2::5
-//  val t = 5 :: 2
-
-//  println(d)
-//  val x = new FloatTensor(s,0,new LongStorage((2::5):Array[Long]))
-
-
-//  val t:(Long, Long) = 0
-//  println(x(0::1))
-//  println(x(List(0L)))
-//  x(1) = 1
-//  println(x)
-
+  val x = new FloatTensor(5, 6).zero()
+  val y = x.select(0, 1).fill(2)
+  println(y)
+  println(x)
+  val z = x.select(1, 4).fill(5)
+  println(z)
+  println(x)
 }
-

@@ -55,11 +55,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   protected def getPointerOps():func.PointerFunc[T, U]
   protected def getCopyOps():func.TensorCopyFunc[T, U]
   protected def getMathOps():func.TensorMathFunc[T, U]
+  protected def getRandomOps():func.TensorRandomFunc[T, U]
   def getStorageOps():func.StorageFunc[T, U]
   val ops = getOps()
   val copyOps = getCopyOps()
   val ptrOps = getPointerOps()
   val storageOps = getStorageOps()
+  val randomOps = getRandomOps()
   def mathOps = getMathOps()
   protected [th4j] var ptr = ops.Tensor_new()
 
@@ -310,6 +312,10 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Storage(storagePtr)
   }
 
+  def unary_~ = size()
+
+
+/*----------------------------------------------------*/
   def nDimension():Int={
     ops.Tensor_nDimension(ptr)
   }
@@ -328,6 +334,10 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
   def isContiguous():Boolean = {
     ops.Tensor_isContiguous(ptr) == 1
+  }
+  def contiguous():Tensor[T, U]={
+    ptrOps.Tensor(
+      ops.Tensor_newContiguous(ptr))
   }
 
   def isSize(targetSize: LongStorage):Boolean = {
@@ -357,6 +367,18 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
   def set(storage:Storage[T, U]):Tensor[T, U] = set(storage, 0, null, null)
   def set(storage:Storage[T, U], storageOffset:Long, sizes:LongStorage):Tensor[T, U] = set(storage, storageOffset, sizes, null)
+  def set(storage:Storage[T, U], storageOffset:Long, szAndSt: Long*):Tensor[T, U]={
+    //check the length of szAndSt
+    if (szAndSt.isEmpty) set(storage, storageOffset, null, null)
+    else {
+      val argLen = szAndSt.length
+      val paddedSzAndSt = if (argLen % 2 != 0) szAndSt ++ List(-1L) else szAndSt
+      val (sizes, strides) = paddedSzAndSt.zipWithIndex.partition{case(_,i)=>i%2==0}
+      set(storage, storageOffset, new LongStorage(sizes.map(_._1).toArray), new LongStorage(strides.map(_._1).toArray))
+    }
+  }
+
+
   /*--------------------------------------------------*/
   import th4j.Tensor._
   def copy(src:Tensor[_, _]) = {
@@ -531,17 +553,27 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
       }
     }else{//subtraction mode, ndimension is the same
       ops.Tensor_set(res, ptr)
-      ranges.zip(sizes.iterator().toList)
+
+      ranges.zipWithIndex
       .foreach{
-        case ((start, end), size)=>{
+        case ((start, end), index)=>{
+          val size = sizes(index)
+          val posStart = if(start < 0) start + size + 1 else start
           val posEnd = if (end < 0) end + size + 1 else end
-          ops.Tensor_narrow(ptr, null, 0, start, end - start)
+          ops.Tensor_narrow(res, null, index, posStart, posEnd - posStart)
         }}
     }
 
     ptrOps.Tensor(res)
   }
+
+  def get(mask:ByteTensor):Tensor[T, U] = {
+    maskedSelect(mask)
+  }
+
   def apply(ranges:List[(Long, Long)]) = get(ranges)
+  def apply(mask:ByteTensor) = maskedSelect(mask)
+
   /*--------------------------------------------------*/
   def nonzero(): LongTensor ={
     val subscript = new LongTensor()
@@ -679,7 +711,9 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Tensor(
       ops.Tensor_newUnfold(ptr, dim, size, step))
   }
-
+  /*--------------------------------------------------*/
+  //Random utility
+  @IfRealMatch("Double", "Float") protected def rand()
   /*--------------------------------------------------*/
   override def toString():String={
     val sb = new StringBuilder
@@ -687,6 +721,9 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     sb ++= s"[${this.getClass.getSimpleName} of size ${size().iterator().mkString("x")}]\n"
     sb.mkString
   }
+
+  def typeName():String = this.getClass.getSimpleName
+
 
 
   /*-----------------------------------------------------------*/

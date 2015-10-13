@@ -36,17 +36,29 @@ package object util {
 
   implicit def toLong(from:Int):Long = from.toLong
 
+  implicit def intToLongPair(from:(Int, Int)):(Long, Long) = (from._1.toLong, from._2.toLong)
+
+//
   implicit def numToSingeletonPair[A](a:A)(implicit ev1:A=>Long):(Long, Long) = new SingletonPair(a)
   implicit def pairToList[A](a:A)(implicit ev1:A=>(Long, Long)):List[(Long, Long)] = List(a)
+
+
   implicit def arrToLongArr[A](a:Array[A])(implicit ev1:A=>Long):Array[Long] = a.map(ev1)
 
+//
 //  implicit def listToLongArr[A](a:List[A])(implicit ev1:A=>Long):Array[Long] = a.map(ev1).toArray
+//  implicit def longToList[A](a:A)(implicit ev1:A=>Long):List[Long]=List(a)
 
-  implicit def longToList[A](a:A)(implicit ev1:A=>Long):List[Long] = List(a)
-  implicit def toLong(from:Long):Long = from
-
-  implicit def listToArray(a:List[Long]):Array[Long] = a.toArray
+//  implicit def listToArray(a:List[Long]):Array[Long] = a.toArray
 //  implicit def numToSingletonPair[A:L](from:A):SingletonPair = new SingletonPair(from)
 
 //  implicit def pairToList(from: (Long, Long)):List[(Long, Long)] = List(from)
+  class StrictList[T](self: List[T]) {
+    def !:(t: T) ={
+      t :: self
+    }
+  }
+  implicit def strictList[A, U](self:A)(implicit ev1:A=>List[U]): StrictList[U] = new StrictList(self)
+
+
 }

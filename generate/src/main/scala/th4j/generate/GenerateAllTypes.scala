@@ -102,7 +102,7 @@ object generateAllTypesImpl{
          val instanceName = TermName(prefix + "Instance")
          
          (q"""
-            @GenerateType("Native",${affix + prefix}, $binderName, "1") object $instanceName extends $parents
+            @GenerateType("Native",${affix + prefix}, $binderName, "1",List($prefix, $real, $accReal)) object $instanceName extends $parents
           """, q"""def $getterName() = $instanceName""")
         }else if (mode == "Factory"){
           val clazzName = TypeName(prefix + classDecl.name)

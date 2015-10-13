@@ -42,7 +42,9 @@ import th4j.util.MacroHelper._
  * 2). Factory mode, the library will bind unimplemented mehthod  into provided class getter function.
  * 3). Template mode, the abstract methods will be declared by a template.
  * In native mode, affix is the native library functions prefix, implSource is the native library name (e.g. "libTH.so", TH is the name)
- * 
+ * templates carry prefix, real and accReal information.
+ *
+ *
  * In factory mode, affix is the suffix for getter functions,
  * implSource are the Objects providing the getter function (e.g. StorageFunc.getInt)
  * separated by ","
@@ -67,12 +69,24 @@ class GenerateType(mode: String,
 object generateType{
   def impl(c:Context)(annottees: c.Expr[Any]*):c.Expr[Any]={
     import c.universe._
-    
-   
+
+
     val mode :: affix :: implSource :: isAppendMethodName :: templates = getAnnnotationArgs(c)
-    
+
     assert(mode == "Native" | mode == "Factory" | mode == "Template")
-    
+
+
+    def checkIfRealMatch(s:Symbol):Option[List[String]]={
+      if (s.annotations.nonEmpty && s.annotations.head.tree.tpe == typeOf[IfRealMatch]){
+        Some(s.annotations.head.tree.children.tail.map{
+          case Literal(Constant(str))=>str.toString
+        })
+
+      }else
+        None
+    }
+
+
     def expandObject(moduleDecl:Any):c.Expr[Any]={
       //Fix this boilerplate code
       val (mods, name, parents, self, body) = moduleDecl match {
@@ -83,8 +97,8 @@ object generateType{
           (mods, name, parents, self, body)
         }
       }
-      
-//      val ModuleDef(mods, name, Template(parents, self, body)) = moduleDecl
+
+      //      val ModuleDef(mods, name, Template(parents, self, body)) = moduleDecl
       assert(parents.length == 1, "Only support single inheritance")
       //Why this magic number 1 exist?
       //This is just a dummy integer to let the compiler type checked parents.head properly
@@ -96,84 +110,100 @@ object generateType{
        * */
       val defaultImplPos = c.enclosingPosition
       val newImplPos = defaultImplPos
-            .withEnd(defaultImplPos.endOrPoint + 1)
-            .withStart(defaultImplPos.startOrPoint + 1)
-            .withPoint(defaultImplPos.point + 1)
-            
+        .withEnd(defaultImplPos.endOrPoint + 1)
+        .withStart(defaultImplPos.startOrPoint + 1)
+        .withPoint(defaultImplPos.point + 1)
+
 
       val implSources = implSource.split(",")
       var idx = 0
+
+//      parent.decls.sorted.filter(s=>s.annotations.nonEmpty)
+//        .foreach(
+//          s=> {
+//            if (s.annotations.head.tree.tpe == typeOf[IfRealMatch])
+//              println("*****", s.annotations.head.tree.children.tail)
+//          }
+//
+//        )
+
       val moddedMethods = parent
-      .decls
-      .sorted
-      .flatMap(s=>{
-        if (s.isAbstract | s.name.toString.startsWith("ctor")){
-        val method = s.asMethod
-        val methodName = method.name
-        val MethodType(params, retType) = method.typeSignatureIn(parent)
-        val (valDefParams, callParams) = params.map{s=>{
-          val vd = internal.valDef(s)
-          (vd, vd.name)
-        }}.unzip
-        val binderMethodName = TermName(affix  + 
-            {if (isAppendMethodName == "1") methodName.toString else ""})
+        .decls
+        .sorted
+        .flatMap(s=>{
+          if (s.isAbstract | s.name.toString.startsWith("ctor")){
+            val method = s.asMethod
+            val methodName = method.name
+            val MethodType(params, retType) = method.typeSignatureIn(parent)
+            val (valDefParams, callParams) = params.map{s=>{
+              val vd = internal.valDef(s)
+              (vd, vd.name)
+            }}.unzip
+            val binderMethodName = TermName(affix  +
+              {if (isAppendMethodName == "1") methodName.toString else ""})
 
-          if (mode == "Native" & s.isAbstract){
-            List(q"""@native def $binderMethodName (..$valDefParams):$retType""",
-                q"""override def $methodName(..$valDefParams) = $binderMethodName(..$callParams)""")
-          }else if (mode == "Factory"){
-            if (s.isAbstract){
-              val source = {
-                if (implSource != "" && implSources(idx) != "")
-                  implSources(idx)
-                else{
-                   //I only come up with this super ugly trick
-                  //if you have better idea, please do notify me
-                  val TypeRef(_,sym,_) = retType
-                  showRaw(sym).toString().split("\\.").last
-                }
+            if (mode == "Native" & s.isAbstract){
+              val matchReal = checkIfRealMatch(s)
+              if (matchReal.isDefined && !matchReal.get.contains(templates(1))){
+                List(q"""override def $methodName(..$valDefParams) = throw new Exception("Not implemented")""")
+              }else {
+                List(
+                  q"""@native def $binderMethodName (..$valDefParams):$retType""",
+                  q"""override def $methodName(..$valDefParams) = $binderMethodName(..$callParams)""")
               }
-              idx = idx + 1
-              val provider =  Apply(Select(Ident(TermName(source)), binderMethodName), List())
-              List(q"""override def $methodName(..$valDefParams) = $provider""")
+            }else if (mode == "Factory"){
+              if (s.isAbstract){
+                val source = {
+                  if (implSource != "" && implSources(idx) != "")
+                    implSources(idx)
+                  else{
+                    //I only come up with this super ugly trick
+                    //if you have better idea, please do notify me
+                    val TypeRef(_,sym,_) = retType
+                    showRaw(sym).toString().split("\\.").last
+                  }
+                }
+                idx = idx + 1
+                val provider =  Apply(Select(Ident(TermName(source)), binderMethodName), List())
+                List(q"""override def $methodName(..$valDefParams) = $provider""")
 
-            }else if (s.name.toString.startsWith("ctor")){
-              List(q"""
+              }else if (s.name.toString.startsWith("ctor")){
+                List(q"""
                 def this(..$valDefParams) = {
                   this()
                   $methodName(..$callParams)
                 }
               """,
-              q"""
+                  q"""
                  def create(..$valDefParams) = {
                     new ${name.toTypeName}(..$callParams)
                  }
 
                """)
-            }else{
+              }else{
+                List()
+              }
+            }else if (mode == "Template"){
+              val template = templates(idx)
+              idx = idx + 1
+              val Array(prefix, real, accReal) = affix.split(",")
+              val parsedTemplate = c.parse(template.format(prefix, real, accReal))
+              List(q"""override def $methodName(..$valDefParams) = $parsedTemplate""")
+            }else{ //impossible to reach
               List()
             }
-          }else if (mode == "Template"){
-            val template = templates(idx)
-            idx = idx + 1
-            val Array(prefix, real, accReal) = affix.split(",")
-            val parsedTemplate = c.parse(template.format(prefix, real, accReal))
-            List(q"""override def $methodName(..$valDefParams) = $parsedTemplate""")
-          }else{ //impossible to reach
+          }else{
             List()
-           }
-        }else{
-          List()
-        }
-      }).map(s=> atPos(newImplPos)(s))
-      
-      
-      
+          }
+        }).map(s=> atPos(newImplPos)(s))
+
+
+
       if (mode == "Native"){
         c.Expr[Any](
             ModuleDef(mods, name.toTermName, Template(parents, self, (q"""Native.register($implSource)""" :: body) ++ moddedMethods)))
       }else if (mode == "Factory"){
-       val ret =  c.Expr[Any](
+        val ret =  c.Expr[Any](
           ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList)) 
         )
         ret
@@ -186,25 +216,25 @@ object generateType{
       }
 
     }
-    
+
     /*-------------------------------------------*/
-    
+
     annottees.map(_.tree).toList match{
       case (moduleDecl:ModuleDef) :: Nil => {
         val expandedDecl = expandObject(moduleDecl)
         expandedDecl
       }
-      
+
       case (classDecl:ClassDef) :: Nil =>{
         expandObject(classDecl)
       }
-      
-      case _ => 
+
+      case _ =>
         c.abort(c.enclosingPosition, "Invalid Annottee, only support object instantiation")
 
     }
-    
-//    c.Expr[Any](q"""""")
+
+    //    c.Expr[Any](q"""""")
   }
 }
 

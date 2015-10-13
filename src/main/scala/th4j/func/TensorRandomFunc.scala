@@ -1,5 +1,3 @@
-
-
 /*
  * The MIT License (MIT)
  *
@@ -28,24 +26,14 @@
 package th4j.func
 
 import com.sun.jna._
-import th4j.{Tensor, Storage}
-import th4j.Storage._
-import th4j.Tensor._
 import th4j.generate._
 
-
-
-
-@GenerateAllTypes("Template","","",
-  "ptr.get%2$sArray(offset, size)",
-  "ptr.write(offset, buf, index, length)",
-  "new %1$sStorage(ptr)",
-  "new %1$sTensor(ptr)")
-trait PointerFunc[T <: AnyVal, U<:AnyVal] {
-  def Array(ptr: Pointer, offset:Long, size:Int) : Array[T]
-  def Write(ptr: Pointer, offset:Long, buf:Array[T], index:Int, length:Int)
-  def Storage(ptr: Pointer):Storage[T, U]
-  def Tensor(ptr: Pointer):Tensor[T, U]
+/**
+ * Created by et on 13/10/15.
+ */
+@GenerateAllTypes("Native", "TH", "TH")
+trait TensorRandomFunc[T<:AnyVal, U<:AnyVal] {
+  def Tensor_rand(self: Pointer, generator: Pointer)
+  def Tensor_geometric(self:Pointer, generator:Pointer, p:Double)
+  def Tensor_bernoulli(self:Pointer, generator:Pointer, p:Double)
 }
-
-

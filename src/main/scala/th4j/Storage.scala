@@ -42,6 +42,8 @@ import scala.language.experimental.macros
 import th4j.func._
 import th4j.generate._
 
+import scala.reflect.ClassTag
+
 
 @GenerateAllTypes("Factory", "", "0")
 abstract class Storage[T <: AnyVal, U <: AnyVal]{
@@ -73,8 +75,10 @@ abstract class Storage[T <: AnyVal, U <: AnyVal]{
     freePtr()
     ptr = ref
   }
+
   /*------------------------------------------*/
   def size() = ops.Storage_size(ptr)
+  def indicies = 0L until size()
   def elementSize() = ops.Storage_elementSize()
   def get(idx:Long) = {ops.Storage_get(ptr, idx)}
   def apply(idx:Long) = get(idx)
