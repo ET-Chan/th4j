@@ -224,7 +224,10 @@ object generateType{
 
       if (mode == "Native"){
         c.Expr[Any](
-            ModuleDef(mods, name.toTermName, Template(parents, self, (q"""Native.register($implSource)""" :: body) ++ moddedMethods)))
+            ModuleDef(mods, name.toTermName, Template(parents, self, (
+              q"""Native.register($implSource)
+                 Native.setProtected(true)
+               """ :: body) ++ moddedMethods)))
       }else if (mode == "Factory"){
         val ret =  c.Expr[Any](
           ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList)) 

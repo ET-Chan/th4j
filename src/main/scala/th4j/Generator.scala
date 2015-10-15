@@ -52,5 +52,5 @@ class Generator {
 }
 
 object Generator{
-  val DEFAULT = new Generator()
+  val DefaultGenerator = new Generator()
 }

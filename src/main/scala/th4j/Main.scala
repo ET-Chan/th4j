@@ -31,17 +31,17 @@
 //
 //import com.sun.jna._
 //import th4j.Storage._
-//import th4j.Tensor.{FloatTensor, DoubleTensor, IntTensor}
+//import th4j.Tensor.{LongTensor, FloatTensor, DoubleTensor, IntTensor}
 //import th4j.func._
 //import th4j.util._
 //import scala.util.{Random, Try}
 //
 //object Main extends App {
-////  val x = new FloatTensor(5, 6).zero()
-////  val y = x.select(0, 1).fill(2)
+//  val x = new FloatTensor(5, 5).rand()
+//  println(x)
+// val y = x.index(0, new LongTensor(Array(3, 1)))
 ////  println(y)
-////  println(x)
-////  val z = x.select(1, 4).fill(5)
-////  println(z)
+////  y.fill(1)
+////  println(y)
 ////  println(x)
 //}

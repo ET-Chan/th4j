@@ -445,12 +445,17 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   //Random utility, they are only opened to certain subtype,
   //as specified in th4j.package.scala
 
-  protected def rand(): Int ={
-    1
+  import th4j.Generator._
+
+  protected def rand(): Tensor[T, U, Z] ={
+    mathOps.Tensor_rand(ptr, DefaultGenerator.ptr, size().ptr)
+    this
   }
 
-  protected def randn(): Int ={
-    2
+  //n => normal gaussian
+  protected def randn(): Tensor[T, U, Z] ={
+    mathOps.Tensor_rand(ptr, DefaultGenerator.ptr, size().ptr)
+    this
   }
 
   import th4j.Tensor._
@@ -707,12 +712,11 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   override def toString():String={
     val sb = new StringBuilder
     printnd(this, sb)
-    sb ++= s"[${this.getClass.getSimpleName} of size ${size().iterator().mkString("x")}]\n"
+    sb ++= s"[${typeName()} of size ${size().iterator().mkString("x")}]\n"
     sb.mkString
   }
-
-  def typeName():String = this.getClass.getSimpleName
-
+  val selfName = this.getClass.getSimpleName
+  def typeName():String = selfName
 
 
   /*-----------------------------------------------------------*/
@@ -720,7 +724,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   val prefixR = """^(\w*?)Tensor$""".r
 
   def getPrefix():String = {
-    this.getClass.getSimpleName match {
+    typeName() match {
       case prefixR(prefix)=>
         prefix
       case _ =>
