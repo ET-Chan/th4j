@@ -35,12 +35,13 @@ import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import com.sun.jna._
 import th4j.generate._
+import th4j.util._
 /**
  * Created by et on 08/10/15.
  */
 
 @GenerateAllTypes("Native", "TH", "TH")
-trait StorageCopyFunc[T<:AnyVal, U<:AnyVal] {
+trait StorageCopyFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
   def Storage_rawCopy(storage:Pointer, src: Array[T])
   def Storage_copy(storage:Pointer, src: Pointer)
   def Storage_copyByte(storage:Pointer, src: Pointer)

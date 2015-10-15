@@ -27,12 +27,15 @@ package th4j.func
 
 import com.sun.jna._
 import th4j.generate._
+import th4j.generate.IfRealMatch
+
+import th4j.util._
 
 /**
  * Created by et on 11/10/15.
  */
 @GenerateAllTypes("Native", "TH", "TH")
-trait TensorMathFunc [T<:AnyVal, U<:AnyVal]{
+trait TensorMathFunc [T<:AnyVal, U<:AnyVal, Z<:Device]{
   def Tensor_fill(r:Pointer, value:T):Unit
   def Tensor_zero(r:Pointer):Unit
 
@@ -108,7 +111,6 @@ trait TensorMathFunc [T<:AnyVal, U<:AnyVal]{
   def Tensor_tril(r:Pointer, t:Pointer, k:Long):Unit
   def Tensor_triu(r:Pointer, t:Pointer, k:Long):Unit
   def Tensor_cat(r:Pointer, ta:Pointer, tb:Pointer, dimension:Int):Unit
-//  def Tensor_catArray(result:Pointer, inputs:Pointer, numInputs:Int, dimension:Int):Unit
 
   def Tensor_ltValue(r:Pointer, t:Pointer, value:T):Unit
   def Tensor_leValue(r:Pointer, t:Pointer, value:T):Unit
@@ -130,4 +132,11 @@ trait TensorMathFunc [T<:AnyVal, U<:AnyVal]{
   def Tensor_geTensorT(r:Pointer, ta:Pointer, tb:Pointer):Unit
   def Tensor_neTensorT(r:Pointer, ta:Pointer, tb:Pointer):Unit
   def Tensor_eqTensorT(r:Pointer, ta:Pointer, tb:Pointer):Unit
+
+
+  @IfRealMatch("Double","Float") def Tensor_rand(r:Pointer, generator:Pointer, size:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_randn(r:Pointer, generator:Pointer, size:Pointer)
+
+//    @IfRealMatch("Double","Float") def Tensor_rand(r:Pointer, generator:Pointer, size:Pointer)
+//    @IfRealMatch("Double","Float") def Tensor_randn(r:Pointer, generator:Pointer, size:Pointer)
 }

@@ -30,13 +30,20 @@ package object th4j {
   val defaultPrefix = "TH"
   
   val allTypes = Map(
-    "Int"   ->("Int","Long"),
-    "Float" ->("Float","Double"),
-    "Byte"  ->("Byte", "Long"),
-    "Char"  ->("Char","Long"),
-    "Short" ->("Short","Long"),
-    "Long" -> ("Long","Long"),
-    "Double" -> ("Double","Double")
+    "Int"   ->("Int","Long", "CPU"),
+    "Float" ->("Float","Double", "CPU"),
+    "Byte"  ->("Byte", "Long", "CPU"),
+    "Char"  ->("Char","Long", "CPU"),
+    "Short" ->("Short","Long", "CPU"),
+    "Long" -> ("Long","Long", "CPU"),
+    "Double" -> ("Double","Double", "CPU")
+  )
+
+  val restrictions = Map(
+    "Tensor" -> Map(
+      "rand" -> List("Double", "Float"),
+      "randn" -> List("Double", "Float")
+    )
   )
 
 }

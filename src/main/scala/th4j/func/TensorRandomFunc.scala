@@ -27,12 +27,12 @@ package th4j.func
 
 import com.sun.jna._
 import th4j.generate._
-
+import th4j.util._
 /**
  * Created by et on 13/10/15.
  */
 @GenerateAllTypes("Native", "TH", "TH")
-trait TensorRandomFunc[T<:AnyVal, U<:AnyVal] {
+trait TensorRandomFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
   def Tensor_rand(self: Pointer, generator: Pointer)
   def Tensor_geometric(self:Pointer, generator:Pointer, p:Double)
   def Tensor_bernoulli(self:Pointer, generator:Pointer, p:Double)

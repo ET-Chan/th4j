@@ -33,7 +33,7 @@ import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
 
 import th4j.util.MacroHelper._
-
+import th4j.util.CPU
 /*
  * Generate an object (or class) abstract methods automatically according 
  * annotation arguments
@@ -50,7 +50,7 @@ import th4j.util.MacroHelper._
  * separated by ","
  * if implSource is an empty string, or some implSource are not provided, 
  * (e.g.) "StorageFunc",,"PointerFunc", then the companion objects of the return type
- * of the corresponding method will be implSource
+ * of the corresponding method will be implSource, templates carry prefix, real and accReal information.
  *
  * In Template Mode, affix is the "prefix, real, accReal", implSource and isAppendMethodName is not used
   * templates is the template supplying for implementation of the abstract methods
@@ -87,14 +87,29 @@ object generateType{
     }
 
 
+    def getMethodInfo(parent:Type, s: Symbol): (TermName, Type, List[ValDef], List[TermName], TermName) = {
+      val method = s.asMethod
+      val methodName = method.name
+      val MethodType(params, retType) = method.typeSignatureIn(parent)
+      val (valDefParams, callParams) = params.map { s => {
+        val vd = internal.valDef(s)
+        (vd, vd.name)
+      }
+      }.unzip
+      val binderMethodName = TermName(affix + {
+        if (isAppendMethodName == "1") methodName.toString else ""
+      })
+      (methodName, retType, valDefParams, callParams, binderMethodName)
+    }
     def expandObject(moduleDecl:Any):c.Expr[Any]={
       //Fix this boilerplate code
       val (mods, name, parents, self, body) = moduleDecl match {
-        case ModuleDef(mods, name, Template(parents, self, body)) => {
-          (mods, name, parents, self, body)
+        case ModuleDef(_mods, _name, Template(_parents, _self, _body)) => {
+          val m = ModuleDef(_mods,_name, Template(_parents, _self, _body))
+          (_mods, _name, _parents, _self, _body)
         }
-        case ClassDef(mods, name, _, Template(parents, self, body))=>{
-          (mods, name, parents, self, body)
+        case ClassDef(_mods, _name, _, Template(_parents, _self, _body))=>{
+          (_mods, _name,_parents, _self, _body)
         }
       }
 
@@ -103,7 +118,13 @@ object generateType{
       //Why this magic number 1 exist?
       //This is just a dummy integer to let the compiler type checked parents.head properly
       //and can be whatever you want.
-      val parent = c.typecheck(q"1.asInstanceOf[${parents.head}]").tpe
+      val t = TypeName(templates(3))
+
+      val parent = c.typecheck(
+        q"""
+            import th4j.util._
+           1.asInstanceOf[${parents.head}]""").tpe
+
       /*
        * A hack to trick the compiler, let it believe our impls are behind the default ctor
        * 
@@ -117,87 +138,89 @@ object generateType{
 
       val implSources = implSource.split(",")
       var idx = 0
-
-//      parent.decls.sorted.filter(s=>s.annotations.nonEmpty)
-//        .foreach(
-//          s=> {
-//            if (s.annotations.head.tree.tpe == typeOf[IfRealMatch])
-//              println("*****", s.annotations.head.tree.children.tail)
-//          }
+      //(1), implement abstract method first
+//      println("*"*5, parent.baseClasses)
+      val sortedDecls = parent.decls.sorted
+//      parent.baseClasses.head.typeSignature.decls.sorted.foreach(s=>{
+//        val matchReal = checkIfRealMatch(s)
+//        if (matchReal.isDefined) println("*"*5, matchReal.get)
+//      })
 //
-//        )
+//      sortedDecls.foreach(s=>println(s.annotations))
 
-      val moddedMethods = parent
-        .decls
-        .sorted
+
+      val abstractMethods = sortedDecls
+        .filter(_.isAbstract)
         .flatMap(s=>{
-          if (s.isAbstract | s.name.toString.startsWith("ctor")){
-            val method = s.asMethod
-            val methodName = method.name
-            val MethodType(params, retType) = method.typeSignatureIn(parent)
-            val (valDefParams, callParams) = params.map{s=>{
-              val vd = internal.valDef(s)
-              (vd, vd.name)
-            }}.unzip
-            val binderMethodName = TermName(affix  +
-              {if (isAppendMethodName == "1") methodName.toString else ""})
-
-            if (mode == "Native" & s.isAbstract){
-              val matchReal = checkIfRealMatch(s)
-              if (matchReal.isDefined && !matchReal.get.contains(templates(1))){
-                List(q"""override def $methodName(..$valDefParams) = throw new Exception("Not implemented")""")
-              }else {
-                List(
-                  q"""@native def $binderMethodName (..$valDefParams):$retType""",
-                  q"""override def $methodName(..$valDefParams) = $binderMethodName(..$callParams)""")
+          val (methodName, retType, valDefParams, callParams, binderMethodName) = getMethodInfo(parent, s)
+          if (mode == "Native"){
+            val matchReal = checkIfRealMatch(s)
+            if (matchReal.isDefined && !matchReal.get.contains(templates(1))){
+              List(q"""override def $methodName(..$valDefParams) = throw new Exception("Not implemented")""")
+            }else {
+              List(
+                q"""@native def $binderMethodName (..$valDefParams):$retType""",
+                q"""override def $methodName(..$valDefParams) = $binderMethodName(..$callParams)""")
+            }
+          }else if (mode == "Factory"){
+            val source = {
+              if (implSource != "" && implSources(idx) != "")
+                implSources(idx)
+              else{
+                //I only come up with this super ugly trick
+                //if you have better idea, please do notify me
+                val TypeRef(_,sym,_) = retType
+                showRaw(sym).toString().split("\\.").last
               }
-            }else if (mode == "Factory"){
-              if (s.isAbstract){
-                val source = {
-                  if (implSource != "" && implSources(idx) != "")
-                    implSources(idx)
-                  else{
-                    //I only come up with this super ugly trick
-                    //if you have better idea, please do notify me
-                    val TypeRef(_,sym,_) = retType
-                    showRaw(sym).toString().split("\\.").last
-                  }
-                }
-                idx = idx + 1
-                val provider =  Apply(Select(Ident(TermName(source)), binderMethodName), List())
-                List(q"""override def $methodName(..$valDefParams) = $provider""")
+            }
+            idx = idx + 1
+            val provider =  Apply(Select(Ident(TermName(source)), binderMethodName), List())
+            List(q"""override def $methodName(..$valDefParams) = $provider""")
+          }else if (mode == "Template"){
+            val template = templates(idx)
+            idx = idx + 1
+            val Array(prefix, real, accReal, device) = affix.split(",")
+            val parsedTemplate = c.parse(template.format(prefix, real, accReal, device))
+            List(q"""override def $methodName(..$valDefParams) = $parsedTemplate""")
+          }else{
+            List()
+          }
+        })
 
-              }else if (s.name.toString.startsWith("ctor")){
-                List(q"""
+      val ctors =
+      {if (mode != "Factory") List() else{
+        sortedDecls.filter(_.name.toString.startsWith("ctor")).flatMap(s=>{
+          val (methodName, retType, valDefParams, callParams, binderMethodName) = getMethodInfo(parent, s)
+          List(q"""
                 def this(..$valDefParams) = {
                   this()
                   $methodName(..$callParams)
                 }
               """,
-                  q"""
+            q"""
                  def create(..$valDefParams) = {
                     new ${name.toTypeName}(..$callParams)
                  }
 
                """)
-              }else{
-                List()
-              }
-            }else if (mode == "Template"){
-              val template = templates(idx)
-              idx = idx + 1
-              val Array(prefix, real, accReal) = affix.split(",")
-              val parsedTemplate = c.parse(template.format(prefix, real, accReal))
-              List(q"""override def $methodName(..$valDefParams) = $parsedTemplate""")
-            }else{ //impossible to reach
-              List()
-            }
-          }else{
-            List()
-          }
-        }).map(s=> atPos(newImplPos)(s))
+        })
+      }}
+      import th4j._
 
 
+      val restriction = restrictions.getOrElse(showRaw(parent.typeSymbol).toString.split("\\.").last, Map())
+
+      val protectedMethods = {if (mode!="Factory")List() else{
+        for{s<- sortedDecls
+            if s.isMethod && s.asMethod.isProtected
+            isFulfill = restriction.get(s.name.toString).map(_.contains(templates(1)))
+            if isFulfill.contains(true)
+            (methodName, retType, valDefParams, callParams, binderMethodName) = getMethodInfo(parent, s)} yield{
+          q"""override def $methodName(..$valDefParams) = super.$methodName(..$callParams)"""
+        }
+      }}
+
+      val moddedMethods = (abstractMethods ++ ctors ++ protectedMethods).map(s=> atPos(newImplPos)(s))
 
       if (mode == "Native"){
         c.Expr[Any](

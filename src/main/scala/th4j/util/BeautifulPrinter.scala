@@ -108,7 +108,7 @@ object BeautifulPrinter {
   }
 
 
-  def printnd(tensor:Tensor[_,_], sb:StringBuilder)={
+  def printnd(tensor:Tensor[_,_,_], sb:StringBuilder)={
     //printn arbitrary tensor
 
     val it = tensor.iterator()

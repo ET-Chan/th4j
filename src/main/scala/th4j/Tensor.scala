@@ -31,32 +31,30 @@ package th4j
 
 
 import com.sun.jna.Pointer
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import th4j.generate._
 import th4j.Storage._
 import th4j.util.SingletonPair
 
-//import th4j.Tensor.ByteTensor
-import scala.collection
-import scala.collection.parallel.mutable
 import scala.language.experimental.macros
 import th4j.func._
 import th4j.util.BeautifulPrinter._
 import th4j.util.Helper._
 
 import scala.util.Try
+import th4j.util._
+
 
 @GenerateAllTypes("Factory", "", "0")
-abstract class Tensor [T<:AnyVal, U<:AnyVal]{
+abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
 //  implicit def array2LongStorage(arr:Array[Long]):LongStorage = {
 //    new LongStorage(arr)
 //  }
-  protected def getOps():func.TensorFunc[T, U]
-  protected def getPointerOps():func.PointerFunc[T, U]
-  protected def getCopyOps():func.TensorCopyFunc[T, U]
-  protected def getMathOps():func.TensorMathFunc[T, U]
-  protected def getRandomOps():func.TensorRandomFunc[T, U]
-  def getStorageOps():func.StorageFunc[T, U]
+  protected def getOps():func.TensorFunc[T, U, Z]
+  protected def getPointerOps():func.PointerFunc[T, U, Z]
+  protected def getCopyOps():func.TensorCopyFunc[T, U, Z]
+  protected def getMathOps():func.TensorMathFunc[T, U, Z]
+  protected def getRandomOps():func.TensorRandomFunc[T, U, Z]
+  def getStorageOps():func.StorageFunc[T, U, Z]
   val ops = getOps()
   val copyOps = getCopyOps()
   val ptrOps = getPointerOps()
@@ -70,7 +68,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   //be cautious while overriding
   //specifically, the macro will automatically generate
   //a auxiliary constructor for each ctor
-  protected def ctor1(tensor: Tensor[T, U]) = {
+  protected def ctor1(tensor: Tensor[T, U, Z]) = {
     freePtr()
     ptr = ops.Tensor_newWithTensor(tensor.ptr)
   }
@@ -95,7 +93,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptr = ops.Tensor_newWithSize4d(size0, size1, size2, size3)
   }
 
-  protected def ctor6(size: LongStorage, stride: Storage[Long, _]) ={
+  protected def ctor6(size: LongStorage, stride: LongStorage) ={
     freePtr()
     ptr = ops.Tensor_newWithSize(size.ptr, Try(stride.ptr).getOrElse(null))
   }
@@ -105,10 +103,10 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
 
 
-  protected def ctor8(storage:Storage[T, U],
+  protected def ctor8(storage:Storage[T, U, Z],
             storageOffset:Long,
-            size: Storage[Long, _],
-            stride: Storage[Long, _]) = {
+            size: LongStorage,
+            stride: LongStorage) = {
     freePtr()
     ptr = ops.Tensor_newWithStorage(
       storage.ptr,
@@ -118,13 +116,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     )
   }
 
-  protected def ctor9(storage:Storage[T, U])={
+  protected def ctor9(storage:Storage[T, U, Z])={
     ctor8(storage, 0, null, null)
   }
 
-  protected def ctor10(storage:Storage[T, U],
+  protected def ctor10(storage:Storage[T, U, Z],
              storageOffset:Long,
-             sizes: Storage[Long, _]) ={
+             sizes: LongStorage) ={
     ctor8(storage, storageOffset, sizes, null)
   }
 
@@ -149,7 +147,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     freePtr()
     ptr = srcPtr
   }
-  protected def create():Tensor[T, U] = {
+  protected def create():Tensor[T, U, Z] = {
     ptr = ops.Tensor_new()
     ptrOps.Tensor(ptr)
   }
@@ -230,28 +228,8 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
 
   }
 
+
   /*--------------------------------------------------*/
-
-//Still not sure if it is a good way to go
-//  def get(xs:Long*):T={
-//    val nd = nDimension()
-//    if(xs.length > nd) throw new Exception(s"Quering is out of bound on this ${nd}d tensors")
-//    xs match {
-//      case x0 :: Nil =>
-//        ops.Tensor_get1d(ptr, x0)
-//      case x0::x1::Nil =>
-//        ops.Tensor_get2d(ptr, x0, x1)
-//      case x0::x1::x2::Nil=>
-//        ops.Tensor_get3d(ptr, x0, x1, x2)
-//      case x0::x1::x2::x3::Nil=>
-//        ops.Tensor_get4d(ptr, x0, x1, x2, x3)
-//      case _=>
-//        throw new NotImplementedException()
-//    }
-//  }
-//  def apply(xs:Long*):T =  get(xs:_*)
-
-//  def get()
 
   def iterator() = {
 
@@ -306,7 +284,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     new LongStorage(ls)
   }
 
-  def storage():Storage[T, U] = {
+  def storage():Storage[T, U, Z] = {
     val storagePtr = ops.Tensor_storage(ptr)
     storageOps.Storage_retain(storagePtr)
     ptrOps.Storage(storagePtr)
@@ -335,7 +313,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   def isContiguous():Boolean = {
     ops.Tensor_isContiguous(ptr) == 1
   }
-  def contiguous():Tensor[T, U]={
+  def contiguous():Tensor[T, U, Z]={
     ptrOps.Tensor(
       ops.Tensor_newContiguous(ptr))
   }
@@ -343,21 +321,21 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   def isSize(targetSize: LongStorage):Boolean = {
     ops.Tensor_isSize(ptr, targetSize.ptr) == 1
   }
-  def isSameSizeAs(targetTensor:Tensor[_, _]):Boolean = {
+  def isSameSizeAs(targetTensor:Tensor[_, _, _]):Boolean = {
     ops.Tensor_isSameSizeAs(ptr, targetTensor.ptr) == 1
   }
   def nElement():Long = {
     ops.Tensor_nElement(ptr)
   }
-  override def clone():Tensor[T, U] = {
+  override def clone():Tensor[T, U, Z] = {
     ptrOps.Tensor(ops.Tensor_newClone(ptr))
   }
   /*--------------------------------------------------*/
-  def set(targetTensor:Tensor[T, U]): Tensor[T, U] ={
+  def set(targetTensor:Tensor[T, U, Z]): Tensor[T, U, Z] ={
     ops.Tensor_set(ptr, targetTensor.ptr)
     this
   }
-  def set(storage:Storage[T, U], storageOffset:Long, sizes:LongStorage, strides:LongStorage):Tensor[T, U] = {
+  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage, strides:LongStorage):Tensor[T, U, Z] = {
     ops.Tensor_setStorage(ptr,
       storage.ptr,
       storageOffset,
@@ -365,9 +343,9 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
       Try(strides.ptr).getOrElse(null))
     this
   }
-  def set(storage:Storage[T, U]):Tensor[T, U] = set(storage, 0, null, null)
-  def set(storage:Storage[T, U], storageOffset:Long, sizes:LongStorage):Tensor[T, U] = set(storage, storageOffset, sizes, null)
-  def set(storage:Storage[T, U], storageOffset:Long, szAndSt: Long*):Tensor[T, U]={
+  def set(storage:Storage[T, U, Z]):Tensor[T, U, Z] = set(storage, 0, null, null)
+  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage):Tensor[T, U, Z] = set(storage, storageOffset, sizes, null)
+  def set(storage:Storage[T, U, Z], storageOffset:Long, szAndSt: Long*):Tensor[T, U, Z]={
     //check the length of szAndSt
     if (szAndSt.isEmpty) set(storage, storageOffset, null, null)
     else {
@@ -378,43 +356,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     }
   }
 
-
-  /*--------------------------------------------------*/
-  import th4j.Tensor._
-  def copy(src:Tensor[_, _]) = {
-
-    src match {
-      case src: IntTensor=>
-        copyOps.Tensor_copyInt(ptr, src.ptr)
-      case src: FloatTensor=>
-        copyOps.Tensor_copyFloat(ptr, src.ptr)
-      case src: ByteTensor =>
-        copyOps.Tensor_copyByte(ptr, src.ptr)
-      case src:CharTensor=>
-        copyOps.Tensor_copyChar(ptr, src.ptr)
-      case src:ShortTensor=>
-        copyOps.Tensor_copyShort(ptr, src.ptr)
-      case src:LongTensor=>
-        copyOps.Tensor_copyLong(ptr, src.ptr)
-      case src:DoubleTensor=>
-        copyOps.Tensor_copyDouble(ptr, src.ptr)
-      case _=>
-        throw new Exception("Unknown type of tensor.")
-    }
-    this
-  }
-
-  def fill(value: T) = {
-    mathOps.Tensor_fill(ptr, value)
-    this
-  }
-
-  def zero() = {
-    mathOps.Tensor_zero(ptr)
-    this
-  }
-  /*--------------------------------------------------*/
-  def resizeAs(src:Tensor[T, U])={
+  def resizeAs(src:Tensor[T, U, Z])={
     ops.Tensor_resizeAs(ptr, src.ptr)
     this
   }
@@ -460,12 +402,12 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     mathOps.Tensor_indexSelect(tensorPtr, ptr, dim, index.ptr)
     ptrOps.Tensor(tensorPtr)
   }
-  def index(src:Tensor[T, U], dim:Int, index:LongStorage)={
+  def index(src:Tensor[T, U, Z], dim:Int, index:LongStorage)={
     mathOps.Tensor_indexSelect(ptr, src.ptr, dim, index.ptr)
     this
   }
 
-  def indexCopy(dim:Int, index: LongStorage, tensor: Tensor[T, U])={
+  def indexCopy(dim:Int, index: LongStorage, tensor: Tensor[T, U, Z])={
     mathOps.Tensor_indexCopy(ptr, dim, index.ptr, tensor.ptr)
     this
   }
@@ -481,12 +423,12 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Tensor(ptr)
   }
 
-  def gather(src:Tensor[T, U], dim:Int, index:LongStorage) = {
+  def gather(src:Tensor[T, U, Z], dim:Int, index:LongStorage) = {
     mathOps.Tensor_gather(ptr, src.ptr, dim, index.ptr)
     this
   }
 
-  def scatter(dim:Int, index: LongStorage, src:Tensor[T, U]) = {
+  def scatter(dim:Int, index: LongStorage, src:Tensor[T, U, Z]) = {
     mathOps.Tensor_scatter(ptr, dim, index.ptr, src.ptr)
     this
   }
@@ -496,18 +438,69 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     this
   }
 
+  /*--------------------------------------------------*/
+
+
+  /*--------------------------------------------------*/
+  //Random utility, they are only opened to certain subtype,
+  //as specified in th4j.package.scala
+
+  protected def rand(): Int ={
+    1
+  }
+
+  protected def randn(): Int ={
+    2
+  }
+
+  import th4j.Tensor._
+
+  def copy(src:Tensor[_, _, _]) = {
+
+    src match {
+      case src: IntTensor=>
+        copyOps.Tensor_copyInt(ptr, src.ptr)
+      case src: FloatTensor=>
+        copyOps.Tensor_copyFloat(ptr, src.ptr)
+      case src: ByteTensor =>
+        copyOps.Tensor_copyByte(ptr, src.ptr)
+      case src:CharTensor=>
+        copyOps.Tensor_copyChar(ptr, src.ptr)
+      case src:ShortTensor=>
+        copyOps.Tensor_copyShort(ptr, src.ptr)
+      case src:LongTensor=>
+        copyOps.Tensor_copyLong(ptr, src.ptr)
+      case src:DoubleTensor=>
+        copyOps.Tensor_copyDouble(ptr, src.ptr)
+      case _=>
+        throw new Exception("Unknown type of tensor.")
+    }
+    this
+  }
+
+  def fill(value: T) = {
+    mathOps.Tensor_fill(ptr, value)
+    this
+  }
+
+  def zero() = {
+    mathOps.Tensor_zero(ptr)
+    this
+  }
+  /*--------------------------------------------------*/
+
   def maskedSelect(mask: ByteTensor) ={
     val tensorPtr = ops.Tensor_new()
     mathOps.Tensor_maskedSelect(tensorPtr, ptr, mask.ptr)
     ptrOps.Tensor(tensorPtr)
   }
 
-  def maskedSelect(src: Tensor[T, U], mask:ByteTensor)={
+  def maskedSelect(src: Tensor[T, U, Z], mask:ByteTensor)={
     mathOps.Tensor_maskedSelect(ptr, src.ptr, mask.ptr)
     this
   }
 
-  def maskedCopy(mask:ByteTensor, src: Tensor[T, U]) ={
+  def maskedCopy(mask:ByteTensor, src: Tensor[T, U, Z]) ={
     mathOps.Tensor_maskedCopy(ptr, mask.ptr, src.ptr)
     this
   }
@@ -518,7 +511,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
 
 
-  def update(ranges:List[(Long, Long)], src:Tensor[_,_]) = {
+  def update(ranges:List[(Long, Long)], src:Tensor[_,_, _]) = {
     val sub = get(ranges)
     sub.copy(src)
   }
@@ -527,7 +520,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     val sub = get(ranges)
     sub.fill(value)
   }
-  //some helper for get
   def get(ranges:List[(Long, Long)]) = {
     val nd = nDimension()
     //sanity check
@@ -567,7 +559,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Tensor(res)
   }
 
-  def get(mask:ByteTensor):Tensor[T, U] = {
+  def get(mask:ByteTensor):Tensor[T, U, Z] = {
     maskedSelect(mask)
   }
 
@@ -585,12 +577,12 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
   }
   /*--------------------------------------------------*/
 
-  def expand(sizes:Long*):Tensor[T, U] = {
+  def expand(sizes:Long*):Tensor[T, U, Z] = {
     val result = ptrOps.Tensor(ops.Tensor_new())
     expand(result, sizes:_*)
   }
 
-  def expand(result:Tensor[T, U], sizes:Long*):Tensor[T, U]={
+  def expand(result:Tensor[T, U, Z], sizes:Long*):Tensor[T, U, Z]={
     //sanity check
     val _nd = nDimension()
     if (sizes.length != _nd){
@@ -610,19 +602,19 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     result.set(storage(),storageOffset(),_sizes, _strides)
   }
 
-  def expand(sizes:LongStorage):Tensor[T, U] = {
+  def expand(sizes:LongStorage):Tensor[T, U, Z] = {
    expand(sizes.iterator().toList:_*)
   }
 
-  def expand(result: Tensor[T, U], sizes:LongStorage):Tensor[T, U] = {
+  def expand(result: Tensor[T, U, Z], sizes:LongStorage):Tensor[T, U, Z] = {
     expand(result, sizes.iterator().toList:_*)
   }
 
-  def expandAs(result:Tensor[T, U], tensor: Tensor[T, U])={
+  def expandAs(result:Tensor[T, U, Z], tensor: Tensor[T, U, Z])={
     expand(result,tensor.size())
   }
 
-  def expandAs(tensor: Tensor[T, U]) = expand(tensor.size())
+  def expandAs(tensor: Tensor[T, U, Z]) = expand(tensor.size())
 
   def squeeze() ={
     val tensorPtr = ops.Tensor_new()
@@ -636,17 +628,17 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Tensor(tensorPtr)
   }
 
-  def view(sizes:Long*):Tensor[T, U]={
+  def view(sizes:Long*):Tensor[T, U, Z]={
     view(new LongStorage(sizes.toArray))
   }
-  def view(result: Tensor[T, U], sizes:Long*):Tensor[T, U]={
+  def view(result: Tensor[T, U, Z], sizes:Long*):Tensor[T, U, Z]={
     view(result, new LongStorage(sizes.toArray))
   }
-  def view(sizes:LongStorage):Tensor[T, U]={
+  def view(sizes:LongStorage):Tensor[T, U, Z]={
     val res = create()
     view(res, sizes)
   }
-  def view(result:Tensor[T, U], sizes:LongStorage): Tensor[T, U] ={
+  def view(result:Tensor[T, U, Z], sizes:LongStorage): Tensor[T, U, Z] ={
     val origElements = nElement()
 
     //sanity check
@@ -675,17 +667,17 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     result.set(storage(),storageOffset(), sizes)
   }
 
-  def transpose(dim1: Int, dim2:Int):Tensor[T, U]={
+  def transpose(dim1: Int, dim2:Int):Tensor[T, U, Z]={
       ptrOps.Tensor(
         ops.Tensor_newTranspose(ptr, dim1, dim2))
   }
 
-  def t():Tensor[T, U]={
+  def t():Tensor[T, U, Z]={
     assert(nDimension() == 2)
     transpose(0, 1)
   }
 
-  def permute(dim:Int*):Tensor[T, U]={
+  def permute(dim:Int*):Tensor[T, U, Z]={
     val nd = nDimension()
     assert(dim.length == nd)
     val aux = dim.toArray
@@ -711,9 +703,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal]{
     ptrOps.Tensor(
       ops.Tensor_newUnfold(ptr, dim, size, step))
   }
-  /*--------------------------------------------------*/
-  //Random utility
-  @IfRealMatch("Double", "Float") protected def rand()
   /*--------------------------------------------------*/
   override def toString():String={
     val sb = new StringBuilder

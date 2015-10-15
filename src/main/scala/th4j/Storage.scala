@@ -33,7 +33,6 @@ import java.io.{BufferedWriter, PrintWriter}
 import java.nio.file.Files
 
 import com.sun.jna._
-import th4j.Storage.LongStorage
 import th4j.util.Helper._
 
 import scala.collection.IterableView
@@ -41,16 +40,17 @@ import scala.io.Source
 import scala.language.experimental.macros
 import th4j.func._
 import th4j.generate._
+import th4j.util._
 
 import scala.reflect.ClassTag
 
 
 @GenerateAllTypes("Factory", "", "0")
-abstract class Storage[T <: AnyVal, U <: AnyVal]{
+abstract class Storage[T <: AnyVal, U <: AnyVal, Z<:Device]{
   //abstract method that needed to be implemented
-  protected def getOps():func.StorageFunc[T, U]
-  protected def getPointerOps():func.PointerFunc[T, U]
-  protected def getStorageCopyOps():func.StorageCopyFunc[T, U]
+  protected def getOps():func.StorageFunc[T, U, Z]
+  protected def getPointerOps():func.PointerFunc[T, U, Z]
+  protected def getStorageCopyOps():func.StorageCopyFunc[T, U, Z]
   val ops= getOps()
   val ptrOps = getPointerOps()
   val copyOps = getStorageCopyOps()
@@ -88,7 +88,7 @@ abstract class Storage[T <: AnyVal, U <: AnyVal]{
 
   //I only come up with this solution, as type erasure erase all
   //type information
-  def copy(src: Storage[_, _]) ={
+  def copy(src: Storage[_, _, _]) ={
     //Why I need to import? may be the macro messes something with the compiler.
     import th4j.Storage._
 

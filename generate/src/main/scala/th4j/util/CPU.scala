@@ -23,27 +23,9 @@
  *
  */
 
-package th4j.func
-import scala.annotation.StaticAnnotation
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-import scala.language.experimental.macros
-import com.sun.jna._
-import th4j.generate._
-
-import th4j.util._
+package th4j.util
 
 /**
- * Created by et on 10/10/15.
+ * Created by et on 15/10/15.
  */
-@GenerateAllTypes("Native", "TH", "TH")
-trait TensorCopyFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
-  def Tensor_copy(tensor:Pointer, src: Pointer)
-  def Tensor_copyByte(tensor:Pointer, src: Pointer)
-  def Tensor_copyChar(tensor:Pointer, src: Pointer)
-  def Tensor_copyShort(tensor:Pointer, src: Pointer)
-  def Tensor_copyInt(tensor:Pointer, src: Pointer)
-  def Tensor_copyLong(tensor:Pointer, src: Pointer)
-  def Tensor_copyFloat(tensor:Pointer, src: Pointer)
-  def Tensor_copyDouble(tensor:Pointer, src: Pointer)
-}
+class CPU extends Device{}

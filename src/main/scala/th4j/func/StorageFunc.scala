@@ -28,17 +28,17 @@
 package th4j.func
 
 import th4j.generate.GenerateAllTypes
+import th4j.util._
 
 import scala.language.experimental.macros
 import th4j.generate._
 import com.sun.jna._
 
 @GenerateAllTypes("Native", "TH", "TH")
-trait StorageFunc[T <: AnyVal, U <: AnyVal] {
-
+trait StorageFunc[T <: AnyVal, U <: AnyVal, Z<:Device] {
   def Storage_data(self:Pointer):Pointer
-  def Storage_size(self:Pointer):Long 
-  def Storage_elementSize():Long 
+  def Storage_size(self:Pointer):Long
+  def Storage_elementSize():Long
   def Storage_get(self:Pointer, idx:Long):T
   def Storage_set(self:Pointer, idx:Long, value:T)
   def Storage_new():Pointer

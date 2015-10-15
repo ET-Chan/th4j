@@ -25,9 +25,10 @@
 
 package th4j.generate
 
+import scala.annotation._
+
 /**
  * Created by et on 13/10/15.
  */
-class IfRealMatch(prefix:String*) {
-
+class IfRealMatch(prefix:String*) extends Annotation with StaticAnnotation{
 }

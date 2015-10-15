@@ -27,13 +27,14 @@ package th4j.func
 
 import com.sun.jna._
 import th4j.generate._
+import th4j.util._
 import th4j.generate.GenerateAllTypes
 
 /**
  * Created by et on 08/10/15.
  */
 @GenerateAllTypes("Native", "TH", "TH")
-trait TensorFunc [T<:AnyVal, U<:AnyVal] {
+trait TensorFunc [T<:AnyVal, U<:AnyVal, Z<:Device] {
 
   //access func
   def Tensor_storage(self:Pointer):Pointer

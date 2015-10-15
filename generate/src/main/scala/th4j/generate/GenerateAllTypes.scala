@@ -86,14 +86,15 @@ object generateAllTypesImpl{
 
     def modifiedCompanion(classDecl:ClassDef) = {
       //iterate through every type
-      allTypes.map{case (prefix, (real, accReal))=>{
+      allTypes.map{case (prefix, (real, accReal, device))=>{
         val parents =
            AppliedTypeTree(
              Ident(
                  classDecl.name),
              List(
                  Ident(TypeName(real)),
-                 Ident(TypeName(accReal))))
+                 Ident(TypeName(accReal)),
+               Ident(TypeName(device))))
 
         val getterName = TermName("get"+prefix)
         
@@ -102,17 +103,17 @@ object generateAllTypesImpl{
          val instanceName = TermName(prefix + "Instance")
          
          (q"""
-            @GenerateType("Native",${affix + prefix}, $binderName, "1",List($prefix, $real, $accReal)) object $instanceName extends $parents
+            @GenerateType("Native",${affix + prefix}, $binderName, "1",List($prefix, $real, $accReal, $device)) object $instanceName extends $parents
           """, q"""def $getterName() = $instanceName""")
         }else if (mode == "Factory"){
           val clazzName = TypeName(prefix + classDecl.name)
          (q"""
-            @GenerateType("Factory", ${"get" + prefix}, $binderName, $affix) class $clazzName extends $parents
+            @GenerateType("Factory", ${"get" + prefix}, $binderName, $affix, List($prefix, $real, $accReal, $device)) class $clazzName extends $parents
           """,q"""def $getterName() = new $clazzName""")
           
         }else if (mode == "Template"){
           val instanceName = TermName(prefix + classDecl.name)
-          val combined = s"$prefix,$real,$accReal"
+          val combined = s"$prefix,$real,$accReal, $device"
           (q"""@GenerateType("Template",$combined,"","",$templates) object $instanceName extends $parents""",
             q"""def $getterName() = $instanceName""")
         }else{
