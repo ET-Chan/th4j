@@ -42,7 +42,8 @@ package object th4j {
   val restrictions = Map(
     "Tensor" -> Map(
       "rand" -> List("Double", "Float"),
-      "randn" -> List("Double", "Float")
+      "randn" -> List("Double", "Float"),
+      "floor" -> List("Double", "Float")
     )
   )
 

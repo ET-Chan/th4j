@@ -96,7 +96,8 @@ object generateType{
           (_params, _retType)
 //        case ExistentialType(_, MethodType(_params, _retType))=>
 //          (_params, _retType)
-        case _=>
+        case t=>
+          println(showRaw(t))
           throw new Exception("Unknown method type signatures.")
       }
 

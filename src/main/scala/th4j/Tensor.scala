@@ -31,6 +31,7 @@ package th4j
 
 
 import com.sun.jna.Pointer
+//import th4j.Tensor.ByteTensor
 import th4j.generate._
 import th4j.Storage._
 import th4j.util.SingletonPair
@@ -438,9 +439,38 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     range(from, until, valOps.APlus(valOps.AZero(), 1))
   }
 
+  /*-----------------------------------------------------------*/
+  def mul(res:this.type, value:T):this.type = {
+    mathOps.Tensor_mul(res.ptr, ptr, value)
+    res
+  }
+  def mul(value:T):this.type = {
+    val res = create()
+    mul(res, value)
+  }
+  //inplace
+  protected def floor():this.type={
+    floor(this)
+  }
+  //existential type is not well supported (at least I don't know)
+  //in macro, that's why the ugly signature instead of this.type
+  protected def floor(res:Tensor[T, U, Z]):this.type = {
+    mathOps.Tensor_floor(res.ptr, ptr)
+    res.asInstanceOf[this.type]
+  }
 
 
   import th4j.Tensor._
+
+  def eq(res:ByteTensor, value:T):ByteTensor = {
+    mathOps.Tensor_eqValue(res.ptr, ptr, value)
+    res
+  }
+  def eq(value:T):ByteTensor = {
+    val res = new ByteTensor()
+    eq(res, value)
+  }
+
   /*--------------------------------------------------*/
   def narrow(dim:Int, index:Long, size:Long)={
     ptrToTensor(ops.Tensor_newNarrow(ptr, dim, index, size))
@@ -449,10 +479,10 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   def select(dim:Int, index:Long)={
     ptrToTensor(ops.Tensor_newSelect(ptr, dim, index))
   }
-
+//
   def index(dim:Int, index:LongTensor):this.type={
     val res = create()
-    index(res, dim, index)
+    this.index(res, dim, index)
     res
   }
   def index(res:this.type, dim:Int, index:LongTensor):this.type = {
@@ -607,6 +637,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
 
   def apply(ranges:List[(Long, Long)]) = get(ranges)
+
   def apply(mask:ByteTensor) = maskedSelect(mask)
 
   /*--------------------------------------------------*/
@@ -689,7 +720,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     val origElements = nElement()
 
     //sanity check
-    val (negDim, accElem) = size()
+    val (negDim, accElem) = sizes
       .iterator()
       .zipWithIndex
     .foldLeft((None:Option[Int], 1L)){
@@ -725,20 +756,21 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
 
   def permute(dim:Int*):this.type={
+    //this is a complete ripped off from the implementation of torch
+    //do I need to provide another license?
     val nd = nDimension()
     assert(dim.length == nd)
     val aux = dim.toArray
     val res = ops.Tensor_new()
     ops.Tensor_set(res, ptr)
-
+    var j = 0
     for{i<- 0 until nd}{
-      var j = 0
-      if(aux(i) != i & aux(i) >= 0){
+      if(aux(i) != i && aux(i) != -1){
         j = i
         while (i!=aux(j)){
-          assert(0<=aux(j) & aux(j)<nd)
+          assert(0<=aux(j) & aux(j)<nd, s"$nd, ${aux(j)}, $j")
           ops.Tensor_transpose(res, null, j, aux(j))
-          val (a1, a2) = (aux(j), -1);j = a1;aux(j) = a2
+          val (a1, a2) = (aux(j), -1);aux(j) = a2;j=a1
         }
         aux(j) = j
       }
@@ -775,20 +807,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     }
   }
 
-
-  /*-----------------------------------------------------------*/
-  def mul(res:this.type, value:T):this.type = {
-    mathOps.Tensor_mul(res.ptr, ptr, value)
-    res
-  }
-  def mul(value:T):this.type = {
-    val res = create()
-    mul(res, value)
-  }
-  //inplace
-  def floor()={
-
-  }
 
   /*-----------------------------------------------------------*/
   override def finalize(): Unit ={

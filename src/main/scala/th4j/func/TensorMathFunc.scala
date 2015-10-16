@@ -133,10 +133,48 @@ trait TensorMathFunc [T<:AnyVal, U<:AnyVal, Z<:Device]{
   def Tensor_neTensorT(r:Pointer, ta:Pointer, tb:Pointer):Unit
   def Tensor_eqTensorT(r:Pointer, ta:Pointer, tb:Pointer):Unit
 
+  @IfRealMatch("Int","Long", "Double", "Float") def Tensor_abs(r:Pointer, t:Pointer)
+
+
+  @IfRealMatch("Double","Float") def Tensor_log(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_log1p(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_exp(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_cos(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_acos(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_cosh(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_sin(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_asin(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_sinh(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_tan(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_atan(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_atan2(r:Pointer, tx:Pointer, ty:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_tanh(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_pow(r:Pointer, t:Pointer, value:T)
+  @IfRealMatch("Double","Float") def Tensor_tpow(r:Pointer, value:T, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_sqrt(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_ceil(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_floor(r:Pointer, t:Pointer)
+  @IfRealMatch("Double","Float") def Tensor_round(r:Pointer, t:Pointer)
+
+  @IfRealMatch("Double","Float") def Tensor_mean(r:Pointer, t:Pointer, dimension:Int)
+  @IfRealMatch("Double","Float") def Tensor_std(r:Pointer, t:Pointer, dimension:Int, flag:Int)
+  @IfRealMatch("Double","Float") def Tensor_var(r:Pointer, t:Pointer, dimension:Int, flag:Int)
+  @IfRealMatch("Double","Float") def Tensor_norm(r:Pointer, t:Pointer, value:T, dimension:Int)
+  @IfRealMatch("Double","Float") def Tensor_dist(a:Pointer, b:Pointer, value:T):U
+  @IfRealMatch("Double","Float") def Tensor_histc(hist:Pointer, tensor:Pointer, nbins:Long, minvalue:T, maxvalue:T)
+
+  @IfRealMatch("Double","Float") def Tensor_meanall(self:Pointer):U
+  @IfRealMatch("Double","Float") def Tensor_varall(self:Pointer):U
+  @IfRealMatch("Double","Float") def Tensor_stdall(self:Pointer):U
+  @IfRealMatch("Double","Float") def Tensor_normall(t:Pointer, value:T):U
+
+  @IfRealMatch("Double","Float") def Tensor_linspace(r:Pointer, a:T, b:T, n:Long)
+  @IfRealMatch("Double","Float") def Tensor_logspace(r:Pointer, a:T, b:T, n:Long)
 
   @IfRealMatch("Double","Float") def Tensor_rand(r:Pointer, generator:Pointer, size:Pointer)
   @IfRealMatch("Double","Float") def Tensor_randn(r:Pointer, generator:Pointer, size:Pointer)
 
-//    @IfRealMatch("Double","Float") def Tensor_rand(r:Pointer, generator:Pointer, size:Pointer)
-//    @IfRealMatch("Double","Float") def Tensor_randn(r:Pointer, generator:Pointer, size:Pointer)
+  @IfRealMatch("Byte") def Tensor_logicalall(self:Pointer):Int
+  @IfRealMatch("Byte") def Tensor_logicalany(self:Pointer):Int
+
 }

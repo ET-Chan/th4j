@@ -37,11 +37,11 @@ import th4j.util._
 import scala.util.{Random, Try}
 
 object Main extends App {
-  val x = new FloatTensor().range(0, 4).resize(1, 4)
-  new FloatTensor(4, 5).rand()
-  println(x)
-  val mask = new ByteTensor(2, 2).bernoulli()
-  println(mask)
-  x.maskedFill(mask, -1)
-  println(x)
+//
+  val x = new FloatTensor(3, 4, 2, 5)
+  println(x.size())
+  val y = x.permute(1, 2, 0, 3)
+  println(y.size())
+
+
 }
