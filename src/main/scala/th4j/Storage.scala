@@ -89,7 +89,6 @@ abstract class Storage[T <: AnyVal, U <: AnyVal, Z<:Device]{
   //I only come up with this solution, as type erasure erase all
   //type information
   def copy(src: Storage[_, _, _]) ={
-    //Why I need to import? may be the macro messes something with the compiler.
     import th4j.Storage._
 
     src match  {
@@ -114,14 +113,14 @@ abstract class Storage[T <: AnyVal, U <: AnyVal, Z<:Device]{
     this
   }
 
-  def copy(src:Array[T])={
+  def copy(src:Array[T]):this.type={
     copyOps.Storage_rawCopy(ptr, src)
     this
   }
 
   def iterator(from:Long = 0)=IterateL(from, size()).map(get)
 
-  def fill(value:T) = {ops.Storage_fill(ptr, value);this}
+  def fill(value:T):this.type = {ops.Storage_fill(ptr, value);this}
   override def toString:String={
     val sb = new StringBuilder()
     import th4j.util.BeautifulPrinter._

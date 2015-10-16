@@ -25,15 +25,23 @@
 
 package th4j.func
 
-import com.sun.jna._
 import th4j.generate._
 import th4j.util._
 /**
- * Created by et on 13/10/15.
+ * Created by et on 15/10/15.
  */
-@GenerateAllTypes("Native", "TH", "TH")
-trait TensorRandomFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
-  def Tensor_random(self: Pointer, generator: Pointer)
-  def Tensor_geometric(self:Pointer, generator:Pointer, p:Double)
-  def Tensor_bernoulli(self:Pointer, generator:Pointer, p:Double)
+@GenerateAllTypes("Template","","",
+  "(lhs + rhs).asInstanceOf[%2$s]",
+  "(lhs + rhs).asInstanceOf[%3$s]",
+  "(lhs * rhs).asInstanceOf[%2$s]",
+  "(lhs * rhs).asInstanceOf[%3$s]",
+  "0.asInstanceOf[%2$s]",
+  "0.asInstanceOf[%3$s]")
+trait ValFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
+  def Plus(lhs:T, rhs: Int):T
+  def APlus(lhs:U, rhs:Int):U
+  def Mul(lhs:T, rhs:Int):T
+  def AMul(lhs:U, rhs:Int):U
+  def Zero():T
+  def AZero():U
 }

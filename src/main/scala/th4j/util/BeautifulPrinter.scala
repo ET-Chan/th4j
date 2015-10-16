@@ -113,32 +113,35 @@ object BeautifulPrinter {
 
     val it = tensor.iterator()
     val nd = tensor.nDimension()
-    val sizes = tensor.size()
-    lazy val size0 = sizes(nd - 2)
-    lazy val size1 = sizes(nd - 1)
+    if (nd != 0) {
 
-    def recurPrint(aux: collection.mutable.Stack[Long]):Unit = {
-      val curDim = aux.length
-      if (curDim == nd - 1) {
-        //this only occurs while the original tensor is 1d.
-        print1d(it, sb)
-      }else if(curDim == nd - 2) {
-        if (nd > 2)
-          sb ++= "(" + aux.mkString(",") + ",.,.)=\n"
-        print2d(it,size0.toInt, size1.toInt, sb)
-      }else{//curDim < nd - 2
-        val curSize = sizes(curDim)
-        (0L until curSize).foreach(i=>{
-          aux.push(i)
-          recurPrint(aux)
-          aux.pop()
-        })
+      val sizes = tensor.size()
+      lazy val size0 = sizes(nd - 2)
+      lazy val size1 = sizes(nd - 1)
+
+      def recurPrint(aux: collection.mutable.Stack[Long]): Unit = {
+        val curDim = aux.length
+        if (curDim == nd - 1) {
+          //this only occurs while the original tensor is 1d.
+          print1d(it, sb)
+        } else if (curDim == nd - 2) {
+          if (nd > 2)
+            sb ++= "(" + aux.mkString(",") + ",.,.)=\n"
+          print2d(it, size0.toInt, size1.toInt, sb)
+        } else {
+          //curDim < nd - 2
+          val curSize = sizes(curDim)
+          (0L until curSize).foreach(i => {
+            aux.push(i)
+            recurPrint(aux)
+            aux.pop()
+          })
+        }
       }
+
+      recurPrint(new mutable.Stack[Long]())
+
     }
-
-    recurPrint(new mutable.Stack[Long]())
-
-
 
 //    def recurPrint(curDim:Int): Unit ={
 //      if (nd)

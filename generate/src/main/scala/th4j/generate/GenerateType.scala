@@ -90,7 +90,17 @@ object generateType{
     def getMethodInfo(parent:Type, s: Symbol): (TermName, Type, List[ValDef], List[TermName], TermName) = {
       val method = s.asMethod
       val methodName = method.name
-      val MethodType(params, retType) = method.typeSignatureIn(parent)
+//      println("*****",showRaw(method.typeSignatureIn(parent)))
+      val (params, retType) = method.typeSignatureIn(parent) match {
+        case MethodType(_params, _retType)=>
+          (_params, _retType)
+//        case ExistentialType(_, MethodType(_params, _retType))=>
+//          (_params, _retType)
+        case _=>
+          throw new Exception("Unknown method type signatures.")
+      }
+
+//      val MethodType(params, retType) = method.typeSignatureIn(parent)
       val (valDefParams, callParams) = params.map { s => {
         val vd = internal.valDef(s)
         (vd, vd.name)
@@ -225,9 +235,9 @@ object generateType{
       if (mode == "Native"){
         c.Expr[Any](
             ModuleDef(mods, name.toTermName, Template(parents, self, (
-              q"""Native.register($implSource)
-                 Native.setProtected(true)
-               """ :: body) ++ moddedMethods)))
+              q"""Native.register($implSource)"""
+//              :: q"Native.setProtected(true)"
+               :: body) ++ moddedMethods)))
       }else if (mode == "Factory"){
         val ret =  c.Expr[Any](
           ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList)) 
