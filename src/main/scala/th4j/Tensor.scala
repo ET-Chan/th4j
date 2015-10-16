@@ -429,13 +429,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
 
   //exclusive range
   //in scala, everything is left inclusive, right exclusive
-  def range(xmin:U, xmax:U, step:U) :this.type= {
-    mathOps.Tensor_range(ptr, xmin, valOps.APlus(xmax, -1), step)
+  def range(from:U, until:U, by:U) :this.type= {
+    mathOps.Tensor_range(ptr, from, valOps.APlus(until, -1), by)
     this
   }
 
-  def range(xmin:U, xmax:U):this.type = {
-    range(xmin, xmax, valOps.APlus(valOps.AZero(), 1))
+  def range(from:U, until:U):this.type = {
+    range(from, until, valOps.APlus(valOps.AZero(), 1))
   }
 
 
@@ -451,13 +451,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
 
   def index(dim:Int, index:LongTensor):this.type={
-    val tensorPtr = ops.Tensor_new()
-    mathOps.Tensor_indexSelect(tensorPtr, ptr, dim, index.ptr)
-    ptrToTensor(tensorPtr)
+    val res = create()
+    index(res, dim, index)
+    res
   }
-  def index(src:this.type, dim:Int, index:LongTensor):this.type={
-    mathOps.Tensor_indexSelect(ptr, src.ptr, dim, index.ptr)
-    this
+  def index(res:this.type, dim:Int, index:LongTensor):this.type = {
+    mathOps.Tensor_indexSelect(res.ptr, ptr, dim, index.ptr)
+    res
   }
 
   def indexCopy(dim:Int, index: LongTensor, tensor: this.type):this.type={
@@ -534,14 +534,13 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   /*--------------------------------------------------*/
 
   def maskedSelect(mask: ByteTensor):this.type ={
-    val tensorPtr = ops.Tensor_new()
-    mathOps.Tensor_maskedSelect(tensorPtr, ptr, mask.ptr)
-    ptrToTensor(tensorPtr)
+    val res = create()
+    maskedSelect(res, mask)
   }
 
-  def maskedSelect(src: this.type, mask:ByteTensor):this.type={
-    mathOps.Tensor_maskedSelect(ptr, src.ptr, mask.ptr)
-    this
+  def maskedSelect(res: this.type, mask:ByteTensor):this.type={
+    mathOps.Tensor_maskedSelect(res.ptr, ptr, mask.ptr)
+    res
   }
 
   def maskedCopy(mask:ByteTensor, src: this.type):this.type ={
@@ -622,7 +621,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   /*--------------------------------------------------*/
 
   def expand(sizes:Long*):this.type = {
-    val result = ptrToTensor(ops.Tensor_new())
+    val result = create()
     expand(result, sizes:_*)
   }
 
