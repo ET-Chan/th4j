@@ -402,9 +402,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
 
 
   /*--------------------------------------------------*/
-
-
-  /*--------------------------------------------------*/
   //Random utility, they are only opened to certain subtype,
   //as specified in th4j.package.scala
 
@@ -438,33 +435,48 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
 
   /*-----------------------------------------------------------*/
-  def mul(res:Self, value:T):Self = {
+  def cat(res:Self = create(), rhs:Self, dim:Int):Self = {
+    mathOps.Tensor_cat(res.ptr, ptr, rhs.ptr, dim)
+    res
+  }
+
+  def diag(res:Self = create(), k:Int = 0):Self = {
+    mathOps.Tensor_diag(res.ptr, ptr, k)
+    res
+  }
+
+  def eye(n:Long, m:Long = 0):Self = {
+    mathOps.Tensor_eye(ptr, n, m)
+    selfThis
+  }
+  def histc(res:Self = create(), nbins:Long = 100, min:T = valOps.Zero(), max:T = valOps.Zero()): Self ={
+    mathOps.Tensor_histc(res.ptr, ptr, nbins, min, max)
+    res
+  }
+  protected def linspace(x1:T, x2:T, n:Long = 100L)={
+    mathOps.Tensor_linspace(ptr, x1, x2, n)
+    selfThis
+  }
+
+
+
+  def mul(res:Self = create(), value:T):Self = {
     mathOps.Tensor_mul(res.ptr, ptr, value)
     res
   }
-  def mul(value:T):Self = {
-    val res = create()
-    mul(res, value)
-  }
   //inplace
-  protected def floor():Self={
-    floor(selfThis.asInstanceOf[Self])
-  }
-  protected def floor(res:Self):Self = {
+  protected def floor(res:Self = create()):Self = {
     mathOps.Tensor_floor(res.ptr, ptr)
     res
   }
 
 
+
   import th4j.Tensor._
 
-  def eq(res:ByteTensor, value:T):ByteTensor = {
+  def eq(res:ByteTensor = new ByteTensor(), value:T):ByteTensor = {
     mathOps.Tensor_eqValue(res.ptr, ptr, value)
     res
-  }
-  def eq(value:T):ByteTensor = {
-    val res = new ByteTensor()
-    eq(res, value)
   }
 
   /*--------------------------------------------------*/

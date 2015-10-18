@@ -102,10 +102,15 @@ object generateType{
       }
 
 //      val MethodType(params, retType) = method.typeSignatureIn(parent)
-      val (valDefParams, callParams) = params.map { s => {
+      val (valDefParams, callParams) = params.zipWithIndex.map { case (s, i) => {
+//        println("*****", showRaw(s), showRaw(s.asTerm.isParamWithDefault))
+
         val vd = internal.valDef(s)
-//        println(s.typeSignature.toString.endsWith("Self"), "*****")
-        (if (s.typeSignature.toString.endsWith("Self"))q"${vd.name}:Self" else vd, vd.name)
+
+        val tpt = if (s.typeSignature.toString.endsWith("Self")) Ident(TypeName("Self")) else vd.tpt
+        val mods = Modifiers(NoFlags)
+        val vdd = ValDef(mods, s.name.toTermName,tpt,q"")
+        (vdd ,vd.name)
       }
       }.unzip
       val binderMethodName = TermName(affix + {
