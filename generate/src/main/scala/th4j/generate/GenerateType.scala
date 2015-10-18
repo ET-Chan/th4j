@@ -87,15 +87,15 @@ object generateType{
     }
 
 
-    def getMethodInfo(parent:Type, s: Symbol): (TermName, Type, List[ValDef], List[TermName], TermName) = {
+    def getMethodInfo(parent:Type, s: Symbol): (TermName, Type, List[Tree], List[TermName], TermName) = {
       val method = s.asMethod
       val methodName = method.name
 //      println("*****",showRaw(method.typeSignatureIn(parent)))
       val (params, retType) = method.typeSignatureIn(parent) match {
         case MethodType(_params, _retType)=>
           (_params, _retType)
-//        case ExistentialType(_, MethodType(_params, _retType))=>
-//          (_params, _retType)
+        case ExistentialType(_, MethodType(_params, _retType))=>
+          (_params, _retType)
         case t=>
           println(showRaw(t))
           throw new Exception("Unknown method type signatures.")
@@ -104,7 +104,8 @@ object generateType{
 //      val MethodType(params, retType) = method.typeSignatureIn(parent)
       val (valDefParams, callParams) = params.map { s => {
         val vd = internal.valDef(s)
-        (vd, vd.name)
+//        println(s.typeSignature.toString.endsWith("Self"), "*****")
+        (if (s.typeSignature.toString.endsWith("Self"))q"${vd.name}:Self" else vd, vd.name)
       }
       }.unzip
       val binderMethodName = TermName(affix + {
@@ -152,16 +153,15 @@ object generateType{
       //(1), implement abstract method first
 //      println("*"*5, parent.baseClasses)
       val sortedDecls = parent.decls.sorted
-//      parent.baseClasses.head.typeSignature.decls.sorted.foreach(s=>{
-//        val matchReal = checkIfRealMatch(s)
-//        if (matchReal.isDefined) println("*"*5, matchReal.get)
-//      })
-//
-//      sortedDecls.foreach(s=>println(s.annotations))
 
+//      sortedDecls.filter(s=>s.isAbstract && s.isType).foreach(s=>println("*****", showRaw(s)))
+
+      val selfDef = sortedDecls.filter(s=>s.isAbstract && s.isType).map{s=>{
+        q"""override type ${s.asType.name} = ${name.toTypeName}"""
+      }}
 
       val abstractMethods = sortedDecls
-        .filter(_.isAbstract)
+        .filter(s=>s.isAbstract && s.isMethod)
         .flatMap(s=>{
           val (methodName, retType, valDefParams, callParams, binderMethodName) = getMethodInfo(parent, s)
           if (mode == "Native"){
@@ -231,7 +231,7 @@ object generateType{
         }
       }}
 
-      val moddedMethods = (abstractMethods ++ ctors ++ protectedMethods).map(s=> atPos(newImplPos)(s))
+      val moddedMethods = (selfDef ++ abstractMethods ++ ctors ++ protectedMethods).map(s=> atPos(newImplPos)(s))
 
       if (mode == "Native"){
         c.Expr[Any](
@@ -241,7 +241,7 @@ object generateType{
                :: body) ++ moddedMethods)))
       }else if (mode == "Factory"){
         val ret =  c.Expr[Any](
-          ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList)) 
+          ClassDef(mods, name.toTypeName, List(), Template(parents, self, body ++ moddedMethods.toList))
         )
         ret
       }else if (mode == "Template"){

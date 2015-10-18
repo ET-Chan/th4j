@@ -38,10 +38,9 @@ import scala.util.{Random, Try}
 
 object Main extends App {
 //
-  val x = new FloatTensor(3, 4, 2, 5)
+  val x = new FloatTensor(3, 4, 2, 5).floor()
   println(x.size())
   val y = x.permute(1, 2, 0, 3)
   println(y.size())
-
 
 }

@@ -66,7 +66,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   val valOps = getValOps()
   val mathOps = getMathOps()
   protected [th4j] var ptr = ops.Tensor_new()
-
+  type Self <: Tensor[T, U, Z]
 
   /*------------------------------------------*/
   //function with prefix `ctor' is treated differently
@@ -75,9 +75,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   //a auxiliary constructor for each ctor
 
   //existential type i.e. this.type does not work well
-  //with current macro paradise. This type signature
-  //will be change to this.type once paradise handles
-  //this better.
+  //with current macro paradise.
   protected def ctor1(tensor: Tensor[T, U, Z]) = {
     freePtr()
     ptr = ops.Tensor_newWithTensor(tensor.ptr)
@@ -157,12 +155,12 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     freePtr()
     ptr = srcPtr
   }
-  def create():this.type = {
+  def create():Self = {
     ptrToTensor(ops.Tensor_new())
   }
 
-  protected def ptrToTensor(ptr:Pointer):this.type = {
-    ptrOps.Tensor(ptr).asInstanceOf[this.type]
+  protected def ptrToTensor(ptr:Pointer):Self = {
+    ptrOps.Tensor(ptr).asInstanceOf[Self]
   }
 
 
@@ -328,7 +326,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   def isContiguous():Boolean = {
     ops.Tensor_isContiguous(ptr) == 1
   }
-  def contiguous():this.type={
+  def contiguous():Self={
     ptrToTensor(ops.Tensor_newContiguous(ptr))
   }
 
@@ -341,25 +339,25 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   def nElement():Long = {
     ops.Tensor_nElement(ptr)
   }
-  override def clone():this.type = {
+  override def clone():Self = {
     ptrToTensor(ops.Tensor_newClone(ptr))
   }
   /*--------------------------------------------------*/
-  def set(targetTensor:this.type): this.type ={
+  def set(targetTensor:Self): Self ={
     ops.Tensor_set(ptr, targetTensor.ptr)
-    this
+    selfThis
   }
-  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage, strides:LongStorage):this.type = {
+  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage, strides:LongStorage):Self = {
     ops.Tensor_setStorage(ptr,
       storage.ptr,
       storageOffset,
       Try(sizes.ptr).getOrElse(null),
       Try(strides.ptr).getOrElse(null))
-    this
+    selfThis
   }
-  def set(storage:Storage[T, U, Z]):this.type = set(storage, 0, null, null)
-  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage):this.type = set(storage, storageOffset, sizes, null)
-  def set(storage:Storage[T, U, Z], storageOffset:Long, szAndSt: Long*):this.type={
+  def set(storage:Storage[T, U, Z]):Self = set(storage, 0, null, null)
+  def set(storage:Storage[T, U, Z], storageOffset:Long, sizes:LongStorage):Self = set(storage, storageOffset, sizes, null)
+  def set(storage:Storage[T, U, Z], storageOffset:Long, szAndSt: Long*):Self={
     //check the length of szAndSt
     if (szAndSt.isEmpty) set(storage, storageOffset, null, null)
     else {
@@ -370,7 +368,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     }
   }
 
-  def resizeAs(src:this.type)={
+  def resizeAs(src:Self)={
     ops.Tensor_resizeAs(ptr, src.ptr)
     this
   }
@@ -382,15 +380,15 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
       ptr,
       sizes.ptr,
       Try(strides.ptr).getOrElse(null))
-    this
+    selfThis
   }
   def resize(size0:Long)={
     ops.Tensor_resize1d(ptr, size0)
-    this
+    selfThis
   }
   def resize(size0:Long, size1:Long)={
     ops.Tensor_resize2d(ptr, size0, size1)
-    this
+    selfThis
   }
   def resize(size0:Long, size1:Long, size2:Long)={
     ops.Tensor_resize3d(ptr, size0, size1, size2)
@@ -412,51 +410,49 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
 
   import th4j.Generator._
 
-  protected def rand(): this.type ={
+  protected def rand(): Self ={
     mathOps.Tensor_rand(ptr, DefaultGenerator.ptr, size().ptr)
-    this
+    selfThis
   }
 
   //n => normal gaussian
-  protected def randn(): this.type ={
+  protected def randn(): Self ={
     mathOps.Tensor_rand(ptr, DefaultGenerator.ptr, size().ptr)
-    this
+    selfThis
   }
 
-  def bernoulli(p:Double = 0.5) :this.type= {
+  def bernoulli(p:Double = 0.5) :Self= {
     randomOps.Tensor_bernoulli(ptr, DefaultGenerator.ptr, p)
-    this
+    selfThis
   }
 
   //exclusive range
   //in scala, everything is left inclusive, right exclusive
-  def range(from:U, until:U, by:U) :this.type= {
+  def range(from:U, until:U, by:U) :Self= {
     mathOps.Tensor_range(ptr, from, valOps.APlus(until, -1), by)
-    this
+    selfThis
   }
 
-  def range(from:U, until:U):this.type = {
+  def range(from:U, until:U):Self = {
     range(from, until, valOps.APlus(valOps.AZero(), 1))
   }
 
   /*-----------------------------------------------------------*/
-  def mul(res:this.type, value:T):this.type = {
+  def mul(res:Self, value:T):Self = {
     mathOps.Tensor_mul(res.ptr, ptr, value)
     res
   }
-  def mul(value:T):this.type = {
+  def mul(value:T):Self = {
     val res = create()
     mul(res, value)
   }
   //inplace
-  protected def floor():this.type={
-    floor(this)
+  protected def floor():Self={
+    floor(selfThis.asInstanceOf[Self])
   }
-  //existential type is not well supported (at least I don't know)
-  //in macro, that's why the ugly signature instead of this.type
-  protected def floor(res:Tensor[T, U, Z]):this.type = {
+  protected def floor(res:Self):Self = {
     mathOps.Tensor_floor(res.ptr, ptr)
-    res.asInstanceOf[this.type]
+    res
   }
 
 
@@ -480,24 +476,24 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     ptrToTensor(ops.Tensor_newSelect(ptr, dim, index))
   }
 //
-  def index(dim:Int, index:LongTensor):this.type={
+  def index(dim:Int, index:LongTensor):Self={
     val res = create()
     this.index(res, dim, index)
     res
   }
-  def index(res:this.type, dim:Int, index:LongTensor):this.type = {
+  def index(res:Self, dim:Int, index:LongTensor):Self = {
     mathOps.Tensor_indexSelect(res.ptr, ptr, dim, index.ptr)
     res
   }
 
-  def indexCopy(dim:Int, index: LongTensor, tensor: this.type):this.type={
+  def indexCopy(dim:Int, index: LongTensor, tensor: Self):Self={
     mathOps.Tensor_indexCopy(ptr, dim, index.ptr, tensor.ptr)
-    this
+    selfThis
   }
 
-  def indexFill(dim:Int, index: LongTensor, value: T):this.type ={
+  def indexFill(dim:Int, index: LongTensor, value: T):Self ={
     mathOps.Tensor_indexFill(ptr, dim, index.ptr, value)
-    this
+    selfThis
   }
 
 
@@ -512,24 +508,24 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     ptrToTensor(resPtr)
   }
 
-  def gather(src:this.type, dim:Int, index:LongStorage):this.type = {
+  def gather(src:Self, dim:Int, index:LongStorage):Self = {
     mathOps.Tensor_gather(ptr, src.ptr, dim, index.ptr)
-    this
+    selfThis
   }
 
-  def scatter(dim:Int, index: LongTensor, src:this.type):this.type = {
+  def scatter(dim:Int, index: LongTensor, src:Self):Self = {
     val addedIndex = alignLongTensor(index)
     mathOps.Tensor_scatter(ptr, dim, addedIndex.ptr, src.ptr)
-    this
+    selfThis
   }
 
-  def scatter(dim:Int, index:LongTensor, value:T):this.type={
+  def scatter(dim:Int, index:LongTensor, value:T):Self={
     val addedIndex = alignLongTensor(index)
     mathOps.Tensor_scatterFill(ptr, dim, addedIndex.ptr, value)
-    this
+    selfThis
   }
   /*------------------------------------------------------------*/
-  def copy(src:Tensor[_, _, _]):this.type = {
+  def copy(src:Tensor[_, _, _]):Self = {
 
     src match {
       case src: IntTensor=>
@@ -549,51 +545,53 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
       case _=>
         throw new Exception("Unknown type of tensor.")
     }
-    this
+    selfThis
+
   }
 
-  def fill(value: T):this.type = {
+  def fill(value: T):Self = {
     mathOps.Tensor_fill(ptr, value)
-    this
+    selfThis
   }
 
-  def zero():this.type = {
+  def zero():Self = {
     mathOps.Tensor_zero(ptr)
-    this
+    selfThis
   }
   /*--------------------------------------------------*/
 
-  def maskedSelect(mask: ByteTensor):this.type ={
+  def maskedSelect(mask: ByteTensor):Self ={
     val res = create()
     maskedSelect(res, mask)
   }
 
-  def maskedSelect(res: this.type, mask:ByteTensor):this.type={
+  def maskedSelect(res: Self, mask:ByteTensor):Self={
     mathOps.Tensor_maskedSelect(res.ptr, ptr, mask.ptr)
     res
   }
 
-  def maskedCopy(mask:ByteTensor, src: this.type):this.type ={
+  def maskedCopy(mask:ByteTensor, src: Self):Self ={
     mathOps.Tensor_maskedCopy(ptr, mask.ptr, src.ptr)
-    this
+    selfThis
   }
 
-  def maskedFill(mask:ByteTensor, value:T):this.type = {
+  def maskedFill(mask:ByteTensor, value:T):Self = {
     mathOps.Tensor_maskedFill(ptr, mask.ptr, value)
-    this
+    selfThis
   }
 
 
-  def update(ranges:List[(Long, Long)], src:Tensor[_,_, _]):this.type = {
+  def update(ranges:List[(Long, Long)], src:Tensor[_,_, _]):Self = {
     val sub = get(ranges)
     sub.copy(src)
   }
 
-  def update(ranges:List[(Long, Long)], value:T):this.type = {
+
+  def update(ranges:List[(Long, Long)], value:T):Self = {
     val sub = get(ranges)
     sub.fill(value)
   }
-  def get(ranges:List[(Long, Long)]):this.type = {
+  def get(ranges:List[(Long, Long)]):Self = {
     val nd = nDimension()
     //sanity check
 
@@ -632,7 +630,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     ptrToTensor(res)
   }
 
-  def get(mask:ByteTensor):this.type = {
+  def get(mask:ByteTensor):Self = {
     maskedSelect(mask)
   }
 
@@ -651,12 +649,12 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
   /*--------------------------------------------------*/
 
-  def expand(sizes:Long*):this.type = {
+  def expand(sizes:Long*):Self = {
     val result = create()
     expand(result, sizes:_*)
   }
 
-  def expand(result:this.type, sizes:Long*):this.type={
+  def expand(result:Self, sizes:Long*):Self={
     //sanity check
     val _nd = nDimension()
     if (sizes.length != _nd){
@@ -676,47 +674,47 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     result.set(storage(),storageOffset(),_sizes, _strides)
   }
 
-  def expand(sizes:LongStorage):this.type = {
+  def expand(sizes:LongStorage):Self = {
    expand(sizes.iterator().toList:_*)
   }
 
-  def expand(result: this.type, sizes:LongStorage):this.type = {
+  def expand(result: Self, sizes:LongStorage):Self = {
     expand(result, sizes.iterator().toList:_*)
   }
 
-  def expandAs(result:this.type, tensor: this.type)={
+  def expandAs(result:Self, tensor: Self)={
     expand(result,tensor.size())
   }
 
-  def expandAs(tensor: this.type) = expand(tensor.size())
+  def expandAs(tensor: Self) = expand(tensor.size())
 
-  def squeeze():this.type ={
+  def squeeze():Self ={
     val tensorPtr = ops.Tensor_new()
     ops.Tensor_squeeze(tensorPtr, ptr)
     ptrToTensor(tensorPtr)
   }
 
-  def squeeze(dim:Int):this.type = {
+  def squeeze(dim:Int):Self = {
     val tensorPtr = ops.Tensor_new()
     ops.Tensor_squeeze1d(tensorPtr, ptr, dim)
     ptrToTensor(tensorPtr)
   }
 
-  def viewAs(template: Tensor[_,_,_]):this.type = {
+  def viewAs(template: Tensor[_,_,_]):Self = {
     view(template.size())
   }
 
-  def view(sizes:Long*):this.type={
+  def view(sizes:Long*):Self={
     view(new LongStorage(sizes.toArray))
   }
-  def view(result: this.type, sizes:Long*):this.type={
+  def view(result: Self, sizes:Long*):Self={
     view(result, new LongStorage(sizes.toArray))
   }
-  def view(sizes:LongStorage):this.type={
+  def view(sizes:LongStorage):Self={
     val res = create()
     view(res, sizes)
   }
-  def view(result:this.type, sizes:LongStorage): this.type ={
+  def view(result:Self, sizes:LongStorage):Self ={
     val origElements = nElement()
 
     //sanity check
@@ -745,17 +743,17 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     result.set(storage(),storageOffset(), sizes)
   }
 
-  def transpose(dim1: Int, dim2:Int):this.type={
+  def transpose(dim1: Int, dim2:Int):Self={
       ptrToTensor(
         ops.Tensor_newTranspose(ptr, dim1, dim2))
   }
 
-  def t():this.type={
+  def t():Self={
     assert(nDimension() == 2)
     transpose(0, 1)
   }
 
-  def permute(dim:Int*):this.type={
+  def permute(dim:Int*):Self={
     //this is a complete ripped off from the implementation of torch
     //do I need to provide another license?
     val nd = nDimension()
@@ -778,7 +776,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     ptrToTensor(res)
   }
 
-  def unfold(dim:Int, size:Long, step:Long):this.type={
+  def unfold(dim:Int, size:Long, step:Long):Self={
     ptrToTensor(
       ops.Tensor_newUnfold(ptr, dim, size, step))
   }
@@ -792,8 +790,8 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
   val selfName = this.getClass.getSimpleName
   def typeName():String = selfName
-
-
+  protected def selfThis:Self = this.asInstanceOf[Self]
+  protected implicit def toSelf[Q<:Tensor[T, U, Z]](t:Q):Self = t.asInstanceOf[Self]
   /*-----------------------------------------------------------*/
 
   val prefixR = """^(\w*?)Tensor$""".r
