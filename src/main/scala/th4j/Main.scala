@@ -40,9 +40,11 @@ object Main extends App {
 
 //
 
-  val x = new FloatTensor(3, 4, 2, 5).linspace(1, 10)
-  println(x.size())
-  val y = x.permute(1, 2, 0, 3)
-  println(y.size())
+
+//  val x = new FloatTensor(100).rand().multinomial(n = 100, replacement = true)
+//  println(x.size())
+
+//  val y = x.permute(1, 2, 0, 3)
+//  println(y.size())
 
 }

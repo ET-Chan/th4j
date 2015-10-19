@@ -90,7 +90,6 @@ object generateType{
     def getMethodInfo(parent:Type, s: Symbol): (TermName, Type, List[Tree], List[TermName], TermName) = {
       val method = s.asMethod
       val methodName = method.name
-//      println("*****",showRaw(method.typeSignatureIn(parent)))
       val (params, retType) = method.typeSignatureIn(parent) match {
         case MethodType(_params, _retType)=>
           (_params, _retType)
@@ -103,11 +102,11 @@ object generateType{
 
 //      val MethodType(params, retType) = method.typeSignatureIn(parent)
       val (valDefParams, callParams) = params.zipWithIndex.map { case (s, i) => {
-//        println("*****", showRaw(s), showRaw(s.asTerm.isParamWithDefault))
 
         val vd = internal.valDef(s)
 
-        val tpt = if (s.typeSignature.toString.endsWith("Self")) Ident(TypeName("Self")) else vd.tpt
+        val tpt = if (s.typeSignature.toString.endsWith("Self")) Ident(TypeName("Self"))
+        else if (s.typeSignature.toString.endsWith("_Long")) Ident(TypeName("Long" + genericTypeName(parent))) else vd.tpt
         val mods = Modifiers(NoFlags)
         val vdd = ValDef(mods, s.name.toTermName,tpt,q"")
         (vdd ,vd.name)
@@ -118,6 +117,12 @@ object generateType{
       })
       (methodName, retType, valDefParams, callParams, binderMethodName)
     }
+
+    def genericTypeName(t:Type):String={
+      val TypeRef(_, sym, _) = t
+      showRaw(sym).toString.split("\\.").last
+    }
+
     def expandObject(moduleDecl:Any):c.Expr[Any]={
       //Fix this boilerplate code
       val (mods, name, parents, self, body) = moduleDecl match {
@@ -132,9 +137,6 @@ object generateType{
 
       //      val ModuleDef(mods, name, Template(parents, self, body)) = moduleDecl
       assert(parents.length == 1, "Only support single inheritance")
-      //Why this magic number 1 exist?
-      //This is just a dummy integer to let the compiler type checked parents.head properly
-      //and can be whatever you want.
       val t = TypeName(templates(3))
 
       val parent = c.typecheck(
@@ -156,14 +158,23 @@ object generateType{
       val implSources = implSource.split(",")
       var idx = 0
       //(1), implement abstract method first
-//      println("*"*5, parent.baseClasses)
       val sortedDecls = parent.decls.sorted
 
-//      sortedDecls.filter(s=>s.isAbstract && s.isType).foreach(s=>println("*****", showRaw(s)))
+
+
+      val parentGenericName = genericTypeName(parent)
 
       val selfDef = sortedDecls.filter(s=>s.isAbstract && s.isType).map{s=>{
-        q"""override type ${s.asType.name} = ${name.toTypeName}"""
+        println("*****!",parentGenericName)
+        s.name.toString match {
+          case "Self"=>
+            q"""override type ${s.asType.name} = ${name.toTypeName}"""
+          case "_Long"=>
+            q"""override type ${s.asType.name} = ${TypeName("Long"+parentGenericName)}"""
+        }
+
       }}
+
 
       val abstractMethods = sortedDecls
         .filter(s=>s.isAbstract && s.isMethod)
@@ -185,8 +196,9 @@ object generateType{
               else{
                 //I only come up with this super ugly trick
                 //if you have better idea, please do notify me
-                val TypeRef(_,sym,_) = retType
-                showRaw(sym).toString().split("\\.").last
+                genericTypeName(retType)
+//                val TypeRef(_,sym,_) = retType
+//                showRaw(sym).toString().split("\\.").last
               }
             }
             idx = idx + 1

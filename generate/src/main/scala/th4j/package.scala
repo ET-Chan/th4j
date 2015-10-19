@@ -39,12 +39,33 @@ package object th4j {
     "Double" -> ("Double","Double", "CPU")
   )
 
+
+
   val restrictions = Map(
     "Tensor" -> Map(
-      "linspace" -> List("Double","Float"),
-      "rand" -> List("Double", "Float"),
-      "randn" -> List("Double", "Float"),
-      "floor" -> List("Double", "Float")
+      "abs"          -> List("Double","Float","Int","Long"),
+      "acos"         -> List("Double","Float"),
+      "asin"         -> List("Double","Float"),
+      "atan"         -> List("Double","Float"),
+      "ceil"         -> List("Double","Float"),
+      "cos"          -> List("Double","Float"),
+      "cosh"         -> List("Double","Float"),
+      "exp"          -> List("Double","Float"),
+      "log"          -> List("Double","Float"),
+      "log1p"        -> List("Double","Float"),
+      "pow"          -> List("Double","Float"),
+      "round"        -> List("Double","Float"),
+      "sin"          -> List("Double","Float"),
+      "sinh"         -> List("Double","Float"),
+      "sqrt"         -> List("Double","Float"),
+      "tan"          -> List("Double","Float"),
+      "tanh"         -> List("Double","Float"),
+      "linspace"     -> List("Double","Float"),
+      "logspace"     -> List("Double", "Float"),
+      "rand"         -> List("Double", "Float"),
+      "randn"        -> List("Double", "Float"),
+      "multinomial"  -> List("Double", "Float"),
+      "floor"        -> List("Double", "Float")
     )
   )
 

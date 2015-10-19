@@ -44,4 +44,6 @@ trait ValFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
   def AMul(lhs:U, rhs:Int):U
   def Zero():T
   def AZero():U
+  def One() = Plus(Zero(), 1)
+  def AOne() = APlus(AZero(), 1)
 }

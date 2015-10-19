@@ -36,4 +36,6 @@ trait TensorRandomFunc[T<:AnyVal, U<:AnyVal, Z<:Device] {
   def Tensor_random(self: Pointer, generator: Pointer)
   def Tensor_geometric(self:Pointer, generator:Pointer, p:Double)
   def Tensor_bernoulli(self:Pointer, generator:Pointer, p:Double)
+
+  @IfRealMatch("Double","Float") def Tensor_multinomial(self:Pointer, generator:Pointer, prob_dist:Pointer, n_sample:Int, with_replacement:Int)
 }

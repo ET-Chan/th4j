@@ -31,6 +31,8 @@ package th4j
 
 
 import com.sun.jna.Pointer
+import th4j.Tensor.LongTensor
+
 //import th4j.Tensor.ByteTensor
 import th4j.generate._
 import th4j.Storage._
@@ -67,7 +69,7 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   val mathOps = getMathOps()
   protected [th4j] var ptr = ops.Tensor_new()
   type Self <: Tensor[T, U, Z]
-
+  type _Long <: Tensor[Long, _, _]
   /*------------------------------------------*/
   //function with prefix `ctor' is treated differently
   //be cautious while overriding
@@ -400,7 +402,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     ops.Tensor_resize5d(ptr, size0, size1, size2, size3, size4)
   }
 
-
   /*--------------------------------------------------*/
   //Random utility, they are only opened to certain subtype,
   //as specified in th4j.package.scala
@@ -420,6 +421,16 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
 
   def bernoulli(p:Double = 0.5) :Self= {
     randomOps.Tensor_bernoulli(ptr, DefaultGenerator.ptr, p)
+    selfThis
+  }
+
+  protected def multinomial(res:_Long = new LongTensor().asInstanceOf[_Long], n:Int, replacement:Boolean):_Long = {
+    randomOps.Tensor_multinomial(res.ptr, DefaultGenerator.ptr, ptr, n, if (replacement) 1 else 0)
+    res
+  }
+
+  def randperm(n:Long) = {
+    mathOps.Tensor_randperm(ptr, DefaultGenerator.ptr, n)
     selfThis
   }
 
@@ -457,13 +468,241 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     mathOps.Tensor_linspace(ptr, x1, x2, n)
     selfThis
   }
+  protected def logspace(x1:T, x2:T, n:Long = 50L) = {
+    mathOps.Tensor_logspace(ptr, x1, x2, n)
+    selfThis
+  }
 
 
 
-  def mul(res:Self = create(), value:T):Self = {
+  def one()={
+    mathOps.Tensor_ones(ptr, ops.Tensor_storage(ptr))
+  }
+  def reshape(res:Self) = {
+    mathOps.Tensor_reshape(res.ptr, ptr, res.size().ptr)
+    res
+  }
+  def tril(res:Self = create(), k:Long = 0L)={
+    mathOps.Tensor_tril(res.ptr, ptr, k)
+    res
+  }
+
+  def triu(res:Self = create(), k:Long = 0L) = {
+    mathOps.Tensor_triu(res.ptr, ptr, k)
+    res
+  }
+
+
+  protected def abs(res:Self = selfThis) = {
+    mathOps.Tensor_abs(res.ptr, ptr)
+    res
+  }
+
+  protected def acos(res:Self = selfThis) = {
+    mathOps.Tensor_acos(res.ptr, ptr)
+    res
+  }
+  protected def asin(res:Self = selfThis) = {
+    mathOps.Tensor_asin(res.ptr, ptr)
+    res
+  }
+  protected def atan(res:Self = selfThis) = {
+    mathOps.Tensor_atan(res.ptr, ptr)
+    res
+  }
+  protected def ceil(res:Self = selfThis) = {
+    mathOps.Tensor_ceil(res.ptr, ptr)
+    res
+  }
+  protected def cos(res:Self = selfThis) = {
+    mathOps.Tensor_cos(res.ptr, ptr)
+    res
+  }
+  protected def cosh(res:Self = selfThis) = {
+    mathOps.Tensor_cosh(res.ptr, ptr)
+    res
+  }
+  protected def exp(res:Self = selfThis) = {
+    mathOps.Tensor_exp(res.ptr, ptr)
+    res
+  }
+  protected def log(res:Self = selfThis) = {
+    mathOps.Tensor_log(res.ptr, ptr)
+    res
+  }
+  protected def log1p(res:Self = selfThis) = {
+    mathOps.Tensor_log1p(res.ptr, ptr)
+    res
+  }
+  protected def pow(res:Self = selfThis, n:T) = {
+    mathOps.Tensor_pow(res.ptr, ptr, n)
+    res
+  }
+  protected def tpow(res:Self = selfThis, n:T) = {
+    mathOps.Tensor_tpow(res.ptr, n, ptr)
+    res
+  }
+  protected def sin(res:Self = selfThis)={
+    mathOps.Tensor_sin(res.ptr, ptr)
+    res
+  }
+  protected def sinh(res:Self = selfThis)  ={
+    mathOps.Tensor_sinh(res.ptr, ptr)
+    res
+  }
+  protected def sqrt(res:Self = selfThis)  ={
+    mathOps.Tensor_sqrt(res.ptr, ptr)
+    res
+  }
+  protected def tan(res:Self = selfThis) = {
+    mathOps.Tensor_tan(res.ptr, ptr)
+    res
+  }
+  protected def tanh(res:Self = selfThis) = {
+    mathOps.Tensor_tanh(res.ptr, ptr)
+    res
+  }
+
+  def add(value:T, res:Self = selfThis) = {
+    mathOps.Tensor_add(selfThis.ptr, ptr, value)
+    res
+  }
+  def cadd(rhs:Self, value:T = valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_cadd(res.ptr, ptr,value , rhs.ptr)
+    res
+  }
+
+  def mul(value:T, res:Self = selfThis):Self = {
     mathOps.Tensor_mul(res.ptr, ptr, value)
     res
   }
+
+  def clamp(minValue:T, maxValue:T, res:Self = selfThis) = {
+    mathOps.Tensor_clamp(res.ptr, ptr, minValue, maxValue)
+    res
+  }
+
+  def cmul(rhs:Self, res:Self = selfThis) = {
+    mathOps.Tensor_cmul(res.ptr, ptr, rhs.ptr)
+    res
+  }
+
+  def cpow(rhs:Self, res:Self = selfThis) = {
+    mathOps.Tensor_cpow(res.ptr, ptr, rhs.ptr)
+    res
+  }
+
+  def addcmul(tensor1:Self, tensor2:Self, value:T = valOps.One(), res:Self = selfThis) ={
+    mathOps.Tensor_addcmul(res.ptr, ptr, value, tensor1.ptr, tensor2.ptr)
+    res
+  }
+
+  def div(value:T, res:Self = selfThis) = {
+    mathOps.Tensor_div(res.ptr, ptr, value)
+    res
+  }
+
+  def cdiv(rhs:Self, res:Self = selfThis) = {
+    mathOps.Tensor_cdiv(res.ptr, ptr, rhs.ptr)
+    res
+  }
+
+  def addcdiv(tensor1:Self, tensor2:Self, value:T= valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_addcdiv(res.ptr, ptr, value, tensor1.ptr, tensor2.ptr)
+    res
+  }
+
+  def dot(rhs:Self) = {
+    mathOps.Tensor_dot(ptr, rhs.ptr)
+  }
+  //beta * self + alpha * mat*vec
+  def addmv(mat:Self,
+            vec:Self,
+            alpha:T = valOps.One(),
+            beta:T = valOps.One(),
+            res:Self = selfThis) = {
+    mathOps.Tensor_addmv(res.ptr, beta, ptr, alpha, mat.ptr, vec.ptr)
+    res
+  }
+
+  //v1*self + v2 * vec1 x vec2
+  def addr(vec1:Self, vec2:Self, v1:T = valOps.One(), v2:T = valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_addr(res.ptr, v1, ptr, v2, vec1.ptr, vec2.ptr)
+    res
+  }
+
+  def addmm(mat1:Self, mat2:Self, v1:T = valOps.One(), v2:T = valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_addmm(res.ptr, v1, ptr, v2, mat1.ptr, mat2.ptr)
+    res
+  }
+
+  def addbmm(batch1:Self, batch2:Self, v1:T = valOps.One(), v2:T = valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_addbmm(res.ptr, v1, ptr, v2, batch1.ptr, batch2.ptr)
+    res
+  }
+  def baddbmm(batch1:Self, batch2:Self, v1:T = valOps.One(), v2:T = valOps.One(), res:Self = selfThis) = {
+    mathOps.Tensor_baddbmm(res.ptr, v1, ptr, v2, batch1.ptr, batch2.ptr)
+    res
+  }
+  def mv(vec:Self, res:Self = create()) = {
+    res.resize(size(1))
+    mathOps.Tensor_addmv(res.ptr,
+      valOps.Zero(),
+      res.ptr,
+      valOps.One(),
+      ptr,
+      vec.ptr)
+    res
+  }
+
+  def mm(mat2:Self, res:Self = create()) = {
+    res.resize(size(0), size(1))
+    mathOps.Tensor_addmm(
+      res.ptr,
+      valOps.Zero(),
+      res.ptr,
+      valOps.One(),
+      ptr,
+      mat2.ptr
+    )
+    res
+  }
+
+  def bmm(batch2:Self, res:Self = create()) = {
+    res.resize(size(0), size(1), batch2.size(2))
+    mathOps.Tensor_addbmm(res.ptr,
+      valOps.Zero(),
+      res.ptr,
+      valOps.One(),
+      ptr,
+      batch2.ptr
+    )
+    res
+  }
+
+  def ger(vec2:Self, res:Self = create()) = {
+    res.resize(size(0), vec2.size(0))
+    mathOps.Tensor_addr(
+      res.ptr,
+      valOps.Zero(),
+      res.ptr,
+      valOps.One(),
+      ptr,
+      vec2.ptr
+    )
+    res
+  }
+
+
+
+
+
+
+
+
+
+
+
   //inplace
   protected def floor(res:Self = create()):Self = {
     mathOps.Tensor_floor(res.ptr, ptr)
