@@ -28,23 +28,65 @@
 package th4j
 
 import java.nio.ByteOrder
+import java.nio.file.{Paths, Path, Files}
 
+import com.naef.jnlua.LuaState
 import com.sun.jna._
 import th4j.Storage._
 import th4j.Tensor._
 import th4j.func._
 import th4j.util._
+import scala.sys.SystemProperties
 import scala.util.{Random, Try}
 
 object Main extends App {
+  val prob = new SystemProperties()
+  prob("jna.library.path") = "./nativeLib"
+  prob("java.library.path") = "./nativeLib:" + prob("java.library.path")
+  val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" )
+  fieldSysPath.setAccessible( true )
+  fieldSysPath.set( null, null )
+  Native.loadLibrary("libjnlua5.1.so",
+    classOf[Library])
 
+  val L = new LuaState()
+
+  L.openLibs()
+//  println(L.getTop)
+  L.load(Files.newInputStream(Paths.get("lua/hello.lua")),"=hello")
+  L.call(0,0)
+  L.getGlobal("readFromTensor")
+  val t = new DoubleTensor(4, 5).fill(1.0)
+  L.pushNumber(t.getPeerPtr())
+  L.call(1,0)
+//  L.getGlobal("newTensor")
+//  L.call(0, 1)
+//  val ptr = new Pointer(L.toNumber(1).toLong)
+
+//  val t = new DoubleTensor(ptr)
+//  print(t)
+
+//  L.rawGet(1)
+
+
+
+//  val L = LuaStateFactory.newLuaState()
+//  L.openLibs()
 //
+//  val retcode = L.LdoFile("lua/hello.lua")
+//  val errstr = if (retcode!=0) L.toString(-1) else ""
+//  println(errstr)
+//
+//  L.getField(LuaState.LUA_GLOBALSINDEX, "test")
+//  val a = 0.3d
+//  val b = 0.5d
+//  L.pushNumber(a)
+//  L.pushNumber(b)
+//  L.call(2, 1)
+//  val obj = L.getLuaObject(-1)
+//  val (ret1, ret2) = (L.getLuaObject(obj, 1),L.getLuaObject(obj, 2))
+//
+//  println(ret1.getNumber, ret2.getNumber)
 
-
-//  val x = new FloatTensor(100).rand().multinomial(n = 100, replacement = true)
-//  println(x.size())
-
-//  val y = x.permute(1, 2, 0, 3)
-//  println(y.size())
 
 }

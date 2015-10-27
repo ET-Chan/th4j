@@ -694,15 +694,6 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
   }
 
 
-
-
-
-
-
-
-
-
-
   //inplace
   protected def floor(res:Self = create()):Self = {
     mathOps.Tensor_floor(res.ptr, ptr)
@@ -1056,6 +1047,9 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     }
   }
 
+  def getPeerPtr():Long = {
+    Pointer.nativeValue(ptr)
+  }
 
   /*-----------------------------------------------------------*/
   override def finalize(): Unit ={
