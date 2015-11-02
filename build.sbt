@@ -1,6 +1,6 @@
 name := "TH4J"
 
-version := "1.0"
+version := "0.1"
 
 scalaVersion := "2.11.7"
 
@@ -16,6 +16,8 @@ libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.va
   compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full))
 
 scalacOptions ++= Seq("-Ymacro-debug-lite")
+
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 
 //publishTo := Some(Resolver.file("file", new File("./lib")))

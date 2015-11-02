@@ -57,6 +57,7 @@ object Main extends App {
   L.call(0,0)
   L.getGlobal("readFromTensor")
   val t = new DoubleTensor(4, 5).fill(1.0)
+
   L.pushNumber(t.getPeerPtr())
   L.call(1,0)
 //  L.getGlobal("newTensor")
