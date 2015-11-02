@@ -27,7 +27,7 @@ libraryDependencies += ("th4j-core" %% "th4j-core" % "0.1")
 into you build.sbt.
 
 #Usage
-The wrapper aims to mimic the APIs in torch, in an object oriented and type-safe way, as much as possible. The main components in th4j are exactly the same in torch: Storage and Tensor, while storage is the internal holder for tensor data. Similarly, there are six types of tensors(storages) available for use: Double, Float, Int, Long, Short, Char. (Cuda & OpenCL are yet to be implemented.)
+The wrapper aims to mimic the APIs in torch, in an object oriented and type-safe way, as much as possible. The main components in th4j are exactly the ones in torch: Storage and Tensor, while storage is the internal holder for tensor data. Similarly, there are six types of tensors(storages) available for use: Double, Float, Int, Long, Short, Char. (Cuda & OpenCL are yet to be implemented.)
 
 ##Construction
 For the purpose of illustration, we will only focus on playing with DoubleTensor in scala. Java users should be able to use the libraries with similar syntax, except the querying part.
@@ -109,6 +109,9 @@ TODO
 
 # Warning
 The package is in its early development, and the API may change in future release.
+
+# Third party libraries
+1. Torch 7 (All rights reserved to Idiap Research Institute and Deepmind Technologies)
 
 # License
 MIT License
