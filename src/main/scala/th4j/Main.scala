@@ -40,26 +40,26 @@ import scala.sys.SystemProperties
 import scala.util.{Random, Try}
 
 object Main extends App {
-  val prob = new SystemProperties()
-  prob("jna.library.path") = "./nativeLib"
-  prob("java.library.path") = "./nativeLib:" + prob("java.library.path")
-  val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" )
-  fieldSysPath.setAccessible( true )
-  fieldSysPath.set( null, null )
-  Native.loadLibrary("libjnlua5.1.so",
-    classOf[Library])
-
-  val L = new LuaState()
-
-  L.openLibs()
-//  println(L.getTop)
-  L.load(Files.newInputStream(Paths.get("lua/hello.lua")),"=hello")
-  L.call(0,0)
-  L.getGlobal("readFromTensor")
-  val t = new DoubleTensor(4, 5).fill(1.0)
-
-  L.pushNumber(t.getPeerPtr())
-  L.call(1,0)
+//  val prob = new SystemProperties()
+//  prob("jna.library.path") = "./nativeLib"
+//  prob("java.library.path") = "./nativeLib:" + prob("java.library.path")
+//  val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" )
+//  fieldSysPath.setAccessible( true )
+//  fieldSysPath.set( null, null )
+//  Native.loadLibrary("libjnlua5.1.so",
+//    classOf[Library])
+//
+//  val L = new LuaState()
+//
+//  L.openLibs()
+////  println(L.getTop)
+//  L.load(Files.newInputStream(Paths.get("lua/hello.lua")),"=hello")
+//  L.call(0,0)
+//  L.getGlobal("readFromTensor")
+//  val t = new DoubleTensor(4, 5).fill(1.0)
+//
+//  L.pushNumber(t.getPeerPtr())
+//  L.call(1,0)
 //  L.getGlobal("newTensor")
 //  L.call(0, 1)
 //  val ptr = new Pointer(L.toNumber(1).toLong)
@@ -89,5 +89,7 @@ object Main extends App {
 //
 //  println(ret1.getNumber, ret2.getNumber)
 
+  val t = new DoubleTensor(3, 4, 5)
 
+  println(t((1, -1) !: 2))
 }

@@ -1,6 +1,5 @@
-name := "TH4J"
+//name := "TH4J"
 
-version := "0.1"
 
 scalaVersion := "2.11.7"
 
@@ -20,6 +19,6 @@ scalacOptions ++= Seq("-Ymacro-debug-lite")
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 
-//publishTo := Some(Resolver.file("file", new File("./lib")))
-//publishArtifact in (Compile, packageSrc) := false
+bintrayOrganization := Some("et-chan")
+
 
