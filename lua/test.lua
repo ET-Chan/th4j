@@ -21,6 +21,7 @@ function readFromTensor(ptr)
     print(self)
 end
 
-function test(i, str)
-    return i, i, str
+function test(tensor1, tensor2, str)
+    print(str)
+    return tensor1:size(), tensor2:type()
 end

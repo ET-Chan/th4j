@@ -105,8 +105,40 @@ Similar differences occur in eye, zero etc. Refer to the Tensor.scala to know mo
 
 
 ##Lua Interpolation
-TODO
+th4j provides an easy way to construct an adaptor to call Lua function. The binding supports following calling arguments and return types
+This functionality needs jnlua.
 
+1. Int, Double, Float, Char, Byte, Short, String, Long
+2. DoubleTensor, FloatTensor, CharTensor, ShortTensor, LongTensor, IntTensor, ByteTensor (W.I.P.)
+3. List of the above (W.I.P)
+
+Say we have the following Lua function, stored in test.lua, that we wish to call in java.
+
+```lua
+function test(tensor1, tensor2, str)
+    print(str)
+    return tensor1:size(), tensor2:type()
+end
+```
+
+Then, one can invoke following functions to bind the lua function easily
+
+```scala
+val L = new LuaState()
+L.openLibs()
+L.load("""require 'th4j' """, "=wrapper")
+L.call(0,0)
+L.load(Files.newInputStream(Paths.get("test.lua"))
+  , "=test")
+L.call(0, 0)
+val javaFunc = LuaFunction.create[(Tensor, Tensor, String)=>(Long, String)]("test", L)
+val tensor1 = new DoubleTensor()
+val tensor2 = new IntTensor()
+val dummyStr = "Hello from Java"
+javaFunc()(tensor1, tensor2, dummyStr)
+```
+
+This API supports tensor binding, and do reference counting automatically under the hood. It supports multiple Lua return values by Scala.Tuple.
 
 # Warning
 The package is in its early development, and the API may change in future release.
