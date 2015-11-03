@@ -27,6 +27,7 @@
 -- Date: 03/11/15
 -- Time: 14:20
 --
+require 'torch'
 
 th4j = {}
 

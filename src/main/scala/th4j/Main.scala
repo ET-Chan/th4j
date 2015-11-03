@@ -69,7 +69,7 @@ object Main extends App {
 
   val L = new LuaState()
   L.openLibs()
-  L.load("""require 'lua/init' """, "=wrapper")
+  L.load("""require 'th4j' """, "=wrapper")
   L.call(0, 0)
   L.load(Files.newInputStream(Paths.get("lua/test.lua"))
     , "=hello")
