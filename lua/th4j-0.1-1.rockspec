@@ -2,6 +2,7 @@ package = "th4j"
 version = "0.1-1"
 
 source = {
+--    url = "/home/et/code/scala/JTHD",
     url = "git://github.com/et-chan/th4j",
     tag = "master"
 }

@@ -30,5 +30,5 @@
 
 th4j = {}
 
-require ("lua/java/wrapper")
+torch.include ("th4j","java/wrapper.lua")
 
