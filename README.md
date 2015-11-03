@@ -6,7 +6,7 @@ A wrapper of torch TH library for Java (and other JVM langauges), implemented in
 2. JVM 8
 3. cutorch (Optional, Have libTHC.so in LD_LIBRARY_PATH)
 4. sbt 0.13.8 (Just for building)
-5. jnlua (Optiona, for Lua interpolation)
+5. jnlua (Optional, for Lua interpolation)
 
 # Building
 1. `git clone https://github.com/ET-Chan/th4j.git`

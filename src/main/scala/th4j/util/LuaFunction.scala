@@ -27,6 +27,7 @@ package th4j.util
 
 import th4j.generate.GenerateLuaFunc
 import scala.language.experimental.macros
+import scala.reflect.macros.whitebox.Context
 import com.naef.jnlua.LuaState
 
 
@@ -35,15 +36,19 @@ import com.naef.jnlua.LuaState
   * Lua Function help users build
   * adaptor quickly between Lua and JVM
   * without repeatedly rewriting the same
-  * piece of boiler plate code. Noticably, it automatically
-  * transform the JVM tensors to Lua Tensors.
+  * piece of boiler plate code. Noticeably, it automatically
+  * transforms the JVM tensors to Lua Tensors and vice versa.
+  * Reference counters are handled carefully as well.
+  * Warning: Calling on LuaFunction on the same LuaState
+  * is not thread-safe.
   */
 abstract class LuaFunction[T] (luaFunc: String, L: LuaState) {
-  def apply:T
+  def apply():T
 }
 
 object LuaFunction {
-  def create[T](luaFunc: String, L: LuaState) = macro GenerateLuaFunc.impl[T]
+  def create[T](luaFunc: String, L: LuaState):LuaFunction[T] = macro GenerateLuaFunc.impl[T]
+//  def create[T](luaFunc:String, L:LuaState) = _create[T](luaFunc, L).asInstanceOf[LuaFunction[T]]
 //  def newSample = new LuaFunction[Int=>Int]("test") {
 //    override def apply: (Int) => Int = (a)=>1
 //  }

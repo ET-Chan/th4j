@@ -41,7 +41,7 @@ import scala.util.{Random, Try}
 
 object Main extends App {
   val prob = new SystemProperties()
-//  prob("jna.library.path") = "./nativeLib"
+  prob("jna.library.path") = "./nativeLib"
   prob("java.library.path") = "./nativeLib:" + prob("java.library.path")
   val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" )
   fieldSysPath.setAccessible( true )
@@ -49,15 +49,14 @@ object Main extends App {
   Native.loadLibrary("libjnlua5.1.so",
     classOf[Library])
 
-  val L = new LuaState()
+//
+//  L.openLibs()
+////  println(L.getTop)
 
-  L.openLibs()
-//  println(L.getTop)
-  L.load(Files.newInputStream(Paths.get("lua/hello.lua")),"=hello")
-  L.call(0,0)
-  L.getGlobal("readFromTensor")
-  val t = new DoubleTensor(4, 5).fill(1.0)
-  L.pushIn
+//  L.call(0,0)
+//  L.getGlobal("readFromTensor")
+//  val t = new DoubleTensor(4, 5).fill(1.0)
+//  L.pushIn
 //  L.pushNumber(t.getPeerPtr())
 //  L.call(1,0)
 //  L.getGlobal("newTensor")
@@ -67,26 +66,20 @@ object Main extends App {
 //  val t = new DoubleTensor(ptr)
 //  print(t)
 
-//  L.rawGet(1)
 
-
-
-//  val L = LuaStateFactory.newLuaState()
-//  L.openLibs()
+  val L = new LuaState()
+  L.openLibs()
+  L.load("""require 'lua/init' """, "=wrapper")
+  L.call(0, 0)
+  L.load(Files.newInputStream(Paths.get("lua/test.lua"))
+    , "=hello")
+  L.call(0, 0)
 //
-//  val retcode = L.LdoFile("lua/hello.lua")
-//  val errstr = if (retcode!=0) L.toString(-1) else ""
-//  println(errstr)
-//
-//  L.getField(LuaState.LUA_GLOBALSINDEX, "test")
-//  val a = 0.3d
-//  val b = 0.5d
-//  L.pushNumber(a)
-//  L.pushNumber(b)
-//  L.call(2, 1)
-//  val obj = L.getLuaObject(-1)
-//  val (ret1, ret2) = (L.getLuaObject(obj, 1),L.getLuaObject(obj, 2))
-//
-//  println(ret1.getNumber, ret2.getNumber)
+//  L.getGlobal("test")
+//  L.pushInteger(1)
+//  L.call(1, 2)
+//  println(L.toInteger(-1), L.toInteger(-2))
 
+  val test = LuaFunction.create[(Int, String)=>(Long, Double, String)]("test", L)
+  println(test()(1, "hello from ET"))
 }

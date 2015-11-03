@@ -10,7 +10,7 @@ object MacroBuild extends Build {
   val toLib = taskKey[Unit]("Save compiled bytecode jars to ./lib")
 
     val buildSettings = Defaults.defaultSettings ++ Seq(
-      version := "0.1",
+      version := "0.2-NIGHTLY",
       scalaVersion := "2.11.7",
       resolvers += Resolver.sonatypeRepo("snapshots"),
       resolvers += Resolver.sonatypeRepo("releases"),

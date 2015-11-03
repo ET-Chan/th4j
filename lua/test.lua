@@ -14,7 +14,13 @@ function newTensor()
     return ptr
 end
 
+
+
 function readFromTensor(ptr)
     local self = torch.pushudata(ptr, "torch.DoubleTensor")
     print(self)
+end
+
+function test(i, str)
+    return i, i, str
 end
