@@ -107,7 +107,7 @@ Similar differences occur in eye, zero etc. Refer to the Tensor.scala to know mo
 
 
 ##Lua Interpolation
-th4j provides an easy way to construct an adaptor to call Lua function. The binding supports following calling arguments and return types
+th4j provides an easy way to construct an adaptor to call Lua function. The binding supports following calling arguments and return types.
 This functionality needs jnlua.
 
 1. Int, Double, Float, Char, Byte, Short, String, Long
@@ -134,7 +134,7 @@ L.call(0,0)
 L.load(Files.newInputStream(Paths.get("test.lua"))
   , "=test")
 L.call(0, 0)
-val javaFunc = LuaFunction.create[(Tensor, Tensor, String)=>(Long, String)]("test", L)
+val javaFunc = LuaFunction.create[(Tensor, Tensor, String)=>(LongStorage, String)]("test", L)
 val tensor1 = new DoubleTensor()
 val tensor2 = new IntTensor()
 val dummyStr = "Hello from Java"
