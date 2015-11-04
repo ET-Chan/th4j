@@ -1051,6 +1051,11 @@ abstract class Tensor [T<:AnyVal, U<:AnyVal, Z<:Device]{
     Pointer.nativeValue(ptr)
   }
 
+  def retain() = {
+    ops.Tensor_retain(ptr)
+  }
+
+
   /*-----------------------------------------------------------*/
   override def finalize(): Unit ={
     freePtr()

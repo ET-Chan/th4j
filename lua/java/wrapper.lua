@@ -32,7 +32,7 @@ local wrapper = function(func,types, ...)
     local callParams = {... }
 --    print(func, types, callParams)
     for k, v in ipairs(types) do
-        if v:find('Tensor') then
+        if v:find('Tensor') or v:find('Storage') then
            callParams[k] = torch.pushudata(callParams[k], 'torch.' .. v)
         end
     end
@@ -40,13 +40,12 @@ local wrapper = function(func,types, ...)
     local ret = table.pack(func(unpack(callParams)))
 
     for k, v in ipairs(ret) do
-        if (torch.isTensor(v)) then
+        if (torch.isTensor(v) or torch.isStorage(v)) then
             v:retain()
             ret[k] = torch.pointer(v)
         end
     end
     return unpack(ret)
-    --need to be modified
 end
 
 th4j.javaWrapper = wrapper

@@ -135,6 +135,13 @@ abstract class Storage[T <: AnyVal, U <: AnyVal, Z<:Device]{
   }
   /*------------------------------------------*/
 
+  def retain() = {
+    ops.Storage_retain(ptr)
+  }
+  def getPeerPtr():Long = {
+    Pointer.nativeValue(ptr)
+  }
+
   override def finalize(){
     freePtr()
     super.finalize()

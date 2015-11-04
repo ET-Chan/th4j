@@ -30,6 +30,7 @@ package th4j.generate
   */
 
 import com.naef.jnlua.LuaState
+import th4j.{Storage, Tensor}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
@@ -41,7 +42,7 @@ object GenerateLuaFunc {
     import c.universe.Flag._
     //1), get the tpe of T (e.g. String=>Int)
     val tpe = weakTypeOf[T]
-    println(showRaw(tpe))
+//    println(showRaw(tpe))
     //2) get argument and return types
     val types = tpe.typeArgs
     val (params, retTpe) = types.splitAt(types.length - 1)
@@ -64,14 +65,17 @@ object GenerateLuaFunc {
         q"$L.pushNumber($name.toDouble)"
       }else if (s =:= typeOf[String]){
         q"$L.pushString($name)"
-      }else {
+      }else if (s <:< typeOf[Tensor[_,_,_]] || s <:< typeOf[Storage[_,_,_]]){
+        q"$name.retain();$L.pushNumber($name.getPeerPtr())"
+      }
+      else {
         c.abort(c.enclosingPosition, "Invalid argument types, " +
                     "only supports AnyVal and String")
       }
     }
 
     def popFromLuaState(s:Type, idx:Int):Tree = {
-      println(showRaw(s))
+//      println(showRaw(s))
       if (s =:= typeOf[Int]){
         q"$L.toInteger($idx)"
       }else if (s =:= typeOf[Float] | s=:= typeOf[Double] |
@@ -79,6 +83,8 @@ object GenerateLuaFunc {
         q"$L.toNumber($idx).asInstanceOf[$s]"
       }else if (s =:= typeOf[String]){
         q"$L.toString($idx)"
+      }else if (s <:< typeOf[Tensor[_,_,_]] || s <:< typeOf[Storage[_,_,_]]){
+        q"""new $s(new Pointer(L.toNumber($idx).toLong))"""
       }else{
         c.abort(c.enclosingPosition, "Invalid return types, only supports AnyVal and String)")
       }
@@ -97,7 +103,7 @@ object GenerateLuaFunc {
     val typeDef = params.zip(1 to params.length).map{ case (s, idx)=>{
       q"""
          $L.pushInteger($idx)
-         $L.pushString(${s.toString})
+         $L.pushString(${s.toString.split("\\.").last})
          $L.setTable(-3)
        """
     }}

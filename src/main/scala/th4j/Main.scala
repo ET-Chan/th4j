@@ -74,12 +74,15 @@ object Main extends App {
   L.load(Files.newInputStream(Paths.get("lua/test.lua"))
     , "=hello")
   L.call(0, 0)
+
 //
 //  L.getGlobal("test")
 //  L.pushInteger(1)
 //  L.call(1, 2)
 //  println(L.toInteger(-1), L.toInteger(-2))
 
-  val test = LuaFunction.create[(Int, String)=>(Long, Double, String)]("test", L)
-  println(test()(1, "hello from ET"))
+  val test = LuaFunction.create[(DoubleTensor, DoubleTensor, String)=>(LongStorage, String)]("test", L)
+  println(test()(new DoubleTensor(3, 4), new DoubleTensor(), "Hello From Java"))
+//  println(Pointer.nativeValue(a.ptr))
+//  println(a)
 }

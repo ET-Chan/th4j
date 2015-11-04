@@ -2,15 +2,16 @@
 A wrapper of torch TH library for Java (and other JVM langauges), implemented in Scala.
 
 # Prerequisites
-1. Torch 7 (Have libTH.so in LD_LIBRARY_PATH)
+1. Torch 7 (libTH.so in LD_LIBRARY_PATH)
 2. JVM 8
-3. cutorch (Optional, Have libTHC.so in LD_LIBRARY_PATH)
-4. sbt 0.13.8 (Just for building)
-5. jnlua (Optional, for Lua interpolation)
+3. cutorch (optional, libTHC.so in LD_LIBRARY_PATH)
+4. sbt 0.13.8 (for building)
+5. jnlua (optional, for Lua interpolation)
 
 # Building
 1. `git clone https://github.com/ET-Chan/th4j.git`
 2. `cd th4j && sbt compile`
+3. `cd lua && luarocks install th4j-0.1-1.rockspec` (only for lua interpolation)
 
 # Setup
 ## Bintray
@@ -26,6 +27,7 @@ Execute `sbt publishLocal` to publish the compiled library into your local ivy r
 libraryDependencies += ("th4j-core" %% "th4j-core" % "0.1")
 ```
 into you build.sbt.
+
 
 #Usage
 The wrapper aims to mimic the APIs in torch, in an object oriented and type-safe way, as much as possible. The main components in th4j are exactly the ones in torch: Storage and Tensor, while storage is the internal holder for tensor data. Similarly, there are six types of tensors(storages) available for use: Double, Float, Int, Long, Short, Char. (Cuda & OpenCL are yet to be implemented.)
@@ -109,10 +111,11 @@ th4j provides an easy way to construct an adaptor to call Lua function. The bind
 This functionality needs jnlua.
 
 1. Int, Double, Float, Char, Byte, Short, String, Long
-2. DoubleTensor, FloatTensor, CharTensor, ShortTensor, LongTensor, IntTensor, ByteTensor (W.I.P.)
-3. List of the above (W.I.P)
+2. DoubleTensor, FloatTensor, CharTensor, ShortTensor, LongTensor, IntTensor, ByteTensor 
+3. DoubleStorage, FloatStorage, CharStorage, ShortStorage, LongStorage, IntStorage, ByteStorage
+4. List of the above (W.I.P)
 
-Say we have the following Lua function, stored in test.lua, that we wish to call in java.
+Say we have the following Lua function, stored in test.lua, that we want to call in java.
 
 ```lua
 function test(tensor1, tensor2, str)
@@ -145,6 +148,7 @@ The package is in its early development, and the API may change in future releas
 
 # Third party libraries
 1. Torch 7 (All rights reserved to Idiap Research Institute and Deepmind Technologies)
+2. jnlua   (MIT license, by Andre Naef).
 
 # License
 MIT License
